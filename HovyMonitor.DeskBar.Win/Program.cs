@@ -9,10 +9,11 @@ namespace HovyMonitor.DeskBar.Win
     {
         public static readonly Configuration Configuration;
         public static readonly DetectionsService DetectionsService;
+        public static readonly string CurrentDir = @"C:\Program Files\HovyMonitorBar";
 
         static Program()
         {
-            var configPath = Path.Combine(Environment.CurrentDirectory, "appsettings.json");
+            var configPath = Path.Combine(CurrentDir, "appsettings.json");
             if(!File.Exists(configPath))
             {
                 Configuration = new Configuration();

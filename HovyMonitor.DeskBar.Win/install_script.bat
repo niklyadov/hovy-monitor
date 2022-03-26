@@ -10,7 +10,20 @@ if %errorLevel% == 0 (
 ) else (
     echo Please run this script with administrator permissions.
 	pause
-    goto EXIT
+    exit /b 0
+)
+
+IF "%CD%" == "C:\Program Files\HovyMonitorBar" (
+    echo Directory is correct
+) else (
+    echo You should unpack files right into C:\Program Files\HovyMonitorBar directory.
+    echo "Hit any key to move all files automatically or exit and do it manually"
+    pause
+    mkdir "C:\Program Files\HovyMonitorBar"
+    MOVE "%CD%\*" "C:\Program Files\HovyMonitorBar"
+    call "C:\Program Files\HovyMonitorBar\install_script.bat"
+    exit /b 0
+    pause
 )
 
 taskkill /im explorer.exe /f

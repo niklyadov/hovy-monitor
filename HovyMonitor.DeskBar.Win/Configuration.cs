@@ -1,4 +1,6 @@
-﻿namespace HovyMonitor.DeskBar.Win
+﻿using System.Collections.Generic;
+
+namespace HovyMonitor.DeskBar.Win
 {
     public class Configuration
     {
@@ -13,9 +15,7 @@
 
     public class DetectionServiceConfiguration
     {
-        public string Proto { get; set; } = "http";
-        public string Host { get; set; } = "localhost";
-        public uint Port { get; set; } = 6400;
+        public string ApiString { get; set; } = "http://localhost:6400/detections/last?sensorName={{sensorName}}";
     }
 
     public class TimerConfiguration
@@ -26,5 +26,16 @@
     public class UIConfiguration
     {
         public bool UseColorsForText { get; set; } = true;
+        public List<SensorDetectionConfiguration> SensorDetections { get; set; }
+            = new List<SensorDetectionConfiguration>();
+    }
+
+
+    public class SensorDetectionConfiguration
+    {
+        public string Name { get; set; }
+        public int[] Values { get; set; }
+        public string Color { get; set; }
+        public string Description { get; set; }
     }
 }

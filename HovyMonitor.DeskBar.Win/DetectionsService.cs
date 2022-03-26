@@ -23,8 +23,7 @@ namespace HovyMonitor.DeskBar.Win
                     string contents;
                     using (var wc = new System.Net.WebClient())
                     {
-                        contents = wc.DownloadString($"http://localhost:6400/detections/last?sensorName={sensorName}");
-                        //contents = wc.DownloadString($"{_configuration.Proto}://{_configuration.Host}:{_configuration.Port}/detections/last?sensorName={sensorName}");
+                        contents = wc.DownloadString(_configuration.ApiString.Replace("{{sensorName}}", sensorName));
                     }
 
                     action.Invoke(JsonConvert.DeserializeObject<SensorDetections>(contents));

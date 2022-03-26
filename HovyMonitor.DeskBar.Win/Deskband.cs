@@ -4,8 +4,10 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using CSDeskBand.Win;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
+using System.Drawing;
+using System.Globalization;
+using System.IO;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -76,9 +78,7 @@ namespace HovyMonitor.DeskBar.Win
             this.Controls.Add(this.humidityAndTemperature);
             this.Name = "Deskband";
             this.Size = new System.Drawing.Size(75, 40);
-            this.Click += new System.EventHandler(this.Deskband_Click);
             this.ResumeLayout(false);
-
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -100,7 +100,19 @@ namespace HovyMonitor.DeskBar.Win
 
                     if(Program.Configuration.UI.UseColorsForText)
                     {
-                        humidityAndTemperature.ForeColor = GetColorForHumidity(humidity.Value);
+                        var config = Program.Configuration.UI.SensorDetections
+                            .Where(x => x.Name == "dht11_humidity")
+                            .Where(x => InRange(humidity.Value, x.Values[0], x.Values[1]))
+                            .FirstOrDefault();
+
+                        if(config != null && !string.IsNullOrEmpty(config.Color))
+                        {
+                            humidityAndTemperature.ForeColor = GetColorFromHex(config.Color);
+                        }
+                        else
+                        {
+                            humidityAndTemperature.ForeColor = Color.White;
+                        }
                     }
                 });
             });
@@ -115,48 +127,52 @@ namespace HovyMonitor.DeskBar.Win
                 if (CO2Value == null)
                     return;
 
+
                 CO2Dim.Invoke((MethodInvoker)delegate
                 {
-                    CO2Dim.Text = $"{CO2Value.Value} Ppm";
 
+                    CO2Dim.Text = $"{CO2Value.Value} Ppm";
 
                     if (Program.Configuration.UI.UseColorsForText)
                     {
-                        CO2Dim.ForeColor = GetColorForCo2(CO2Value.Value);
+                        var config = Program.Configuration.UI.SensorDetections
+                                .Where(x => x.Name == "mh-z19b_co2")
+                                .Where(x => InRange(CO2Value.Value, x.Values[0], x.Values[1]))
+                                .FirstOrDefault();
+
+                        if (config != null && !string.IsNullOrEmpty(config.Color))
+                        {
+                            CO2Dim.ForeColor = GetColorFromHex(config.Color);
+                        } else
+                        {
+                            CO2Dim.ForeColor = Color.White;
+                        }
                     }
+                    
                 });
             });
-
-            //var CO2Value = random.Next(1800, 1900);
-            //CO2Dim.ForeColor = (CO2Value > 1850) ? Color.Red : Color.WhiteSmoke;
-            //CO2Dim.Text = $"{random.Next(1800, 1900)}";
-        }
-
-        private void Deskband_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void Deskband_Context_Show_Options_Click(object sender, EventArgs e)
         {
-            ExploreFile(System.IO.Path.Combine(Environment.CurrentDirectory, "appsettings.json"));
+            ExploreFile(Path.Combine(Program.CurrentDir, "appsettings.json"));
         }
 
         private void Deskband_Context_Reinstall_Click(object sender, EventArgs e)
         {
-            RunBat(System.IO.Path.Combine(Environment.CurrentDirectory, "install_script.bat"), Environment.CurrentDirectory);
+            RunBat(Path.Combine(Program.CurrentDir, "install_script.bat"), Environment.CurrentDirectory);
         }
 
         private void Deskband_Context_Uninstall_Click(object sender, EventArgs e)
         {
-            RunBat(System.IO.Path.Combine(Environment.CurrentDirectory, "uninstall_script.bat"), Environment.CurrentDirectory);
+            RunBat(Path.Combine(Program.CurrentDir, "uninstall_script.bat"), Environment.CurrentDirectory);
         }
 
         private void Deskband_Context_About_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.1" +
+            MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.2" +
                 "\n\n" +
-                "24.03.2022");
+                "26.03.2022");
         }
 
         public bool ExploreFile(string filePath)
@@ -171,34 +187,13 @@ namespace HovyMonitor.DeskBar.Win
             return true;
         }
 
-        private Color GetColorForHumidity(double value)
+        private Color GetColorFromHex(string hex)
         {
-
-            if (TestRange(value, 0, 20))
-                return Color.IndianRed;
-
-            if(TestRange(value, 21, 40) || TestRange(value, 66, 100))
-                return Color.Yellow;
-
-            return Color.White;
+            int argb = int.Parse(hex.Replace("#", ""), NumberStyles.HexNumber);
+            return Color.FromArgb(argb);
         }
 
-        private Color GetColorForCo2(double value)
-        {
-            if (TestRange(value, 0, 400))
-                return Color.AliceBlue;
-
-            if (TestRange(value, 700, 1000))
-                return Color.Yellow;
-
-            if (TestRange(value, 1000, 2000))
-                return Color.IndianRed;
-
-
-            return Color.White;
-        }
-
-        bool TestRange(double numberToCheck, int bottom, int top)
+        bool InRange(double numberToCheck, int bottom, int top)
         {
             return (numberToCheck >= bottom && numberToCheck <= top);
         }

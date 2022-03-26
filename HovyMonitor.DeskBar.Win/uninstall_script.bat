@@ -3,6 +3,7 @@ title Install DeskBand
 @setlocal enableextensions
 @cd /d "%~dp0"
 
+
 rem Check permissions
 net session >nul 2>&1
 if %errorLevel% == 0 (
