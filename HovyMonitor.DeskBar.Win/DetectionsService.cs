@@ -1,7 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using HovyMonitor.Entity;
+﻿using HovyMonitor.Entity;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -14,7 +15,51 @@ namespace HovyMonitor.DeskBar.Win
             _configuration = configuration;
         }
 
-        public void GetDetectionsForSensor(string sensorName, Action<SensorDetections> action)
+        public List<SensorDetection> GetDetectionsForSensor(string sensorName, int count)
+        {
+            try
+            {
+                string contents;
+                using (var wc = new System.Net.WebClient())
+                {
+                    var url = (_configuration.BaseUri + _configuration.LastSensorDetectionsUrl)
+                        .Replace("{{sensorName}}", sensorName);
+
+                    contents = wc.DownloadString(url);
+                }
+
+                return JsonConvert.DeserializeObject<List<SensorDetection>>(contents);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+
+        public void GetLastSensorDetections(Action<List<SensorDetection>> action)
+        {
+            Task.Run(() =>
+            {
+                var detections = new List<SensorDetection>();
+
+                var definedSensors = Program.Configuration.DetectionService.Sensors;
+                foreach (var sensor in definedSensors)
+                {
+                    var response = GetDetectionsForSensor(sensor.Name, sensor.Detections.Count);
+
+                    if (response != null)
+                    {
+                        detections.AddRange(response);
+                    }
+
+                }
+
+                action.Invoke(detections);
+            });
+        }
+
+        public void GetSensorDetectionsList(Action<List<SensorDetection>> action)
         {
             Task.Run(() =>
             {
@@ -23,15 +68,17 @@ namespace HovyMonitor.DeskBar.Win
                     string contents;
                     using (var wc = new System.Net.WebClient())
                     {
-                        contents = wc.DownloadString(_configuration.ApiString.Replace("{{sensorName}}", sensorName));
+                        var url = _configuration.BaseUri + _configuration.ListOfSensorDetectionsUrl;
+
+                        contents = wc.DownloadString(url);
                     }
 
-                    action.Invoke(JsonConvert.DeserializeObject<SensorDetections>(contents));
+                    action.Invoke(JsonConvert.DeserializeObject<List<SensorDetection>>(contents));
                 }
                 catch
                 {
-                    action.Invoke(null);
                 }
+
             });
         }
     }

@@ -1,9 +1,12 @@
+using HovyMonitor.Api.Data;
+using HovyMonitor.Api.Data.Repository;
 using HovyMonitor.Api.Entity;
 using HovyMonitor.Api.Services;
 using HovyMonitor.Api.Workers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,8 +33,22 @@ namespace HovyMonitor.Api
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "HovyMonitor.Api", Version = "v1" });
             });
-            services.AddHostedService<SerialMonitorWorker>();
+
+            #region DbConnection
+
+            var dbConnection = Configuration.GetConnectionString("DefaultConnection");
+            var dbVersion = Configuration.GetValue<string>("ConnectionMysqlMariaDbVersion");
+            services.AddDbContext<ApplicationContext>(options =>
+                options.UseMySql(dbConnection,
+                    new MariaDbServerVersion(dbVersion)));
+
+            #endregion
+
+            services.AddScoped<SensorDetectionsRepository>();
+
             services.AddSingleton<SensorDetectionsService>();
+
+            services.AddHostedService<SerialMonitorWorker>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

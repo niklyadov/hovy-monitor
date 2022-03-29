@@ -1,6 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
+using HovyMonitor.Api.Data.Repository;
 using HovyMonitor.Entity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace HovyMonitor.Api.Services
@@ -8,35 +13,119 @@ namespace HovyMonitor.Api.Services
     public class SensorDetectionsService
     {
         private readonly ILogger<SensorDetectionsService> _logger;
-        private List<SensorDetections> _sensorDetections
-            = new List<SensorDetections>();
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public SensorDetectionsService(ILogger<SensorDetectionsService> logger)
+        private List<SensorDetection> _sensorDetections
+            = new List<SensorDetection>();
+
+        public SensorDetectionsService(ILogger<SensorDetectionsService> logger,
+            IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
-        public void WriteDetections(string detections)
+        public async Task<List<SensorDetection>> GetListDetections()
         {
-            if(_sensorDetections.Count() > 100)
+            using var scope = _serviceScopeFactory.CreateScope();
+            var repository = scope.ServiceProvider
+                .GetRequiredService<SensorDetectionsRepository>();
+
+            return await repository.GetAll();
+        }
+
+        public async Task WriteDetectionsAsync(string detections)
+        {
+            var first = _sensorDetections.FirstOrDefault();
+
+            if(first != null && (DateTime.Now - first.DateTime).TotalSeconds >= 60)
+            {
+                 var savedDetections = _sensorDetections
+                    .Take(_sensorDetections.Count() / 2)
+                    .ToList();
+
+                _sensorDetections = _sensorDetections
+                    .TakeLast(_sensorDetections.Count() / 2)
+                    .ToList();
+
+                savedDetections = savedDetections
+                    .GroupBy(x => x.FullName)
+                    .Select(cl => new SensorDetection
+                    {
+                        Name = cl.First().Name,
+                        SensorName = cl.First().SensorName,
+                        DateTime = DateTime.Now,
+                        FullName = cl.First().FullName,
+                        Value = cl.Sum(c => c.Value) / cl.Count(),
+                    }).ToList();
+
+                using var scope = _serviceScopeFactory.CreateScope();
+                var repository = scope.ServiceProvider.GetRequiredService<SensorDetectionsRepository>();
+
+                foreach (var savedDetection in savedDetections)
+                {
+                    await repository.Add(savedDetection);
+                }
+            }
+
+
+
+            if (_sensorDetections.Count() > 100)
             {
                 _logger.LogInformation($"All sensor detections was cleaned, because it's count is {_sensorDetections.Count()}");
                 _sensorDetections = _sensorDetections.TakeLast(10).ToList();
             }
 
-            _sensorDetections.Add(new SensorDetections(detections));
+            _sensorDetections.AddRange(ParseDetections(detections));
         }
 
-        public bool TryGetLastDetection(string sensorName, out SensorDetections result)
+        private List<SensorDetection> ParseDetections(string detections)
         {
-            if(string.IsNullOrEmpty(sensorName))
-            {
-                result = _sensorDetections.LastOrDefault();
-            } else
-            {
-                result = _sensorDetections.LastOrDefault(x => x.SensorName.Equals(sensorName));
+            // dht11:t=27.00;h=15.00;
 
+            var detectionsList = new List<SensorDetection>();
+            var colSymbolPosition = detections.IndexOf(':');
+            var sensorName = detections.Substring(0, colSymbolPosition);
+
+            var potentialDetections = detections.Substring(colSymbolPosition + 1, detections.Length - colSymbolPosition - 1).Split(';');
+            foreach (var potentialDetection in potentialDetections)
+            {
+                var equalsSymbolPosition = potentialDetection.IndexOf('=');
+                if (equalsSymbolPosition == -1)
+                {
+                    break;
+                }
+
+                var detectionName = potentialDetection.Substring(0, equalsSymbolPosition);
+
+                var detectionValueLength = potentialDetection.Length - (equalsSymbolPosition + 1);
+                var detectionValue = potentialDetection.Substring(equalsSymbolPosition + 1, detectionValueLength);
+
+
+                if (double.TryParse(detectionValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double valueD))
+                {
+                    detectionsList.Add(new SensorDetection()
+                    {
+                        Name = detectionName,
+                        Value = valueD,
+                        DateTime = DateTime.Now,
+                        SensorName = sensorName,
+                        FullName = $"{sensorName}_{detectionName}"
+                    });
+                }
             }
+
+            return detectionsList;
+        }
+
+        public bool TryGetLastDetections(string sensorName, out List<SensorDetection> result)
+        {
+            var detections = string.IsNullOrEmpty(sensorName)
+                ? _sensorDetections : _sensorDetections.Where(x => x.SensorName.Equals(sensorName));
+
+            result = detections
+                .GroupBy(x => x.FullName)
+                .Select(x => x.First()).ToList();
 
             return result != null;
         }

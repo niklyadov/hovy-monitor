@@ -6,8 +6,6 @@ namespace HovyMonitor.DeskBar.Win
     {
         public DetectionServiceConfiguration DetectionService { get; set; }
             = new DetectionServiceConfiguration();
-        public TimerConfiguration Timer { get; set; } 
-            = new TimerConfiguration();
 
         public UIConfiguration UI { get; set; } 
             =  new UIConfiguration();
@@ -15,27 +13,45 @@ namespace HovyMonitor.DeskBar.Win
 
     public class DetectionServiceConfiguration
     {
-        public string ApiString { get; set; } = "http://localhost:6400/detections/last?sensorName={{sensorName}}";
-    }
+        public string BaseUri { get; set; } = "http://localhost:6400/detections";
+        public string LastSensorDetectionsUrl { get; set; } = "/last?sensorName={{sensorName}}&count={{count}}";
+        public string ListOfSensorDetectionsUrl { get; set; } = "/";
+        public List<SensorConfiguration> Sensors { get; set; }
+            = new List<SensorConfiguration>();
 
-    public class TimerConfiguration
-    {
-        public int UpdateTimeout { get; set; } = 5000;
+        public int RefreshTimeout { get; set; } = 5000;
     }
 
     public class UIConfiguration
     {
-        public bool UseColorsForText { get; set; } = true;
-        public List<SensorDetectionConfiguration> SensorDetections { get; set; }
-            = new List<SensorDetectionConfiguration>();
+
+        public LabelConfiguration FirstLabel { get; set; }
+
+        public LabelConfiguration SecondLabel { get; set; }
     }
 
-
-    public class SensorDetectionConfiguration
+    public class SensorConfiguration
     {
         public string Name { get; set; }
-        public int[] Values { get; set; }
-        public string Color { get; set; }
-        public string Description { get; set; }
+        public List<string> Detections { get; set; }
+            = new List<string>();
+
+    }
+
+    public class LabelConfiguration
+    {
+        public string Format { get; set; }
+        public bool CustomColors { get; set; }
+
+        public List<LabelColorsConfiguration> Colors { get; set; }
+            = new List<LabelColorsConfiguration>();
+    }
+
+    public class LabelColorsConfiguration
+    {
+        public string SensorName { get; set; }
+        public string SensorDetection { get; set; }
+        public double[] Values { get; set; }
+        public string ColorHEX { get; set; }
     }
 }

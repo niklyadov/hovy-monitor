@@ -8,6 +8,8 @@ using System.Linq;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using HovyMonitor.Entity;
+using System.Collections.Generic;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -16,9 +18,10 @@ namespace HovyMonitor.DeskBar.Win
     [CSDeskBandRegistration(Name = "HovyMonitorBar")]
     public partial class Deskband : CSDeskBandWin
     {
-        private Label humidityAndTemperature;
-        private Label CO2Dim;
+        private Label FirstLabel;
+        private Label SecondLabel;
         private Timer Timer;
+        private Form FormGui;
 
         public Deskband()
         {
@@ -26,178 +29,140 @@ namespace HovyMonitor.DeskBar.Win
             InitializeComponent();
 
             ContextMenu cm = new ContextMenu();
-            cm.MenuItems.Add("Configure options", Deskband_Context_Show_Options_Click);
+
+            cm.MenuItems.Add("Show GUI", (object sender, EventArgs e) => {
+                if(FormGui != null)
+                {
+                    FormGui.Close();
+                }
+                FormGui = new MainForm();
+                FormGui.Show();
+            });
+
+            cm.MenuItems.Add("Configure options", (object sender, EventArgs e) => 
+                ExploreFile(Path.Combine(Program.CurrentDir, "appsettings.json")));
+
             cm.MenuItems.Add("-");
-            cm.MenuItems.Add("Re-install", Deskband_Context_Reinstall_Click);
-            cm.MenuItems.Add("Uninstall", Deskband_Context_Uninstall_Click);
+
+            cm.MenuItems.Add("Re-install", (object sender, EventArgs e) => 
+                RunBat(Path.Combine(Program.CurrentDir, "install_script.bat"), Environment.CurrentDirectory));
+
+            cm.MenuItems.Add("Uninstall", (object sender, EventArgs e) =>
+                RunBat(Path.Combine(Program.CurrentDir, "uninstall_script.bat"), Environment.CurrentDirectory));
+
             cm.MenuItems.Add("-");
-            cm.MenuItems.Add("About", Deskband_Context_About_Click);
+
+            cm.MenuItems.Add("About", (object sender, EventArgs e) =>
+                MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.3" +
+                    "\n\n" +
+                    "29.03.2022"));
+
             ContextMenu = cm;
 
             Timer = new Timer();
             Timer.Tick += new EventHandler(Timer_Tick);
-            Timer.Interval = Program.Configuration.Timer.UpdateTimeout;
+            Timer.Interval = Program.Configuration.DetectionService.RefreshTimeout;
             Timer.Start();
         }
 
         private void InitializeComponent()
         {
-            this.humidityAndTemperature = new System.Windows.Forms.Label();
-            this.CO2Dim = new System.Windows.Forms.Label();
+            this.FirstLabel = new System.Windows.Forms.Label();
+            this.SecondLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // humidityAndTemperature
+            // FirstLabel
             // 
-            this.humidityAndTemperature.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.humidityAndTemperature.ForeColor = System.Drawing.SystemColors.Control;
-            this.humidityAndTemperature.Location = new System.Drawing.Point(0, 0);
-            this.humidityAndTemperature.Margin = new System.Windows.Forms.Padding(0);
-            this.humidityAndTemperature.Name = "humidityAndTemperature";
-            this.humidityAndTemperature.Size = new System.Drawing.Size(75, 20);
-            this.humidityAndTemperature.TabIndex = 0;
-            this.humidityAndTemperature.Text = "? ? ?";
-            this.humidityAndTemperature.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.FirstLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.FirstLabel.ForeColor = System.Drawing.SystemColors.Control;
+            this.FirstLabel.Location = new System.Drawing.Point(0, 0);
+            this.FirstLabel.Margin = new System.Windows.Forms.Padding(0);
+            this.FirstLabel.Name = "FirstLabel";
+            this.FirstLabel.Size = new System.Drawing.Size(75, 20);
+            this.FirstLabel.TabIndex = 0;
+            this.FirstLabel.Text = "? ? ?";
+            this.FirstLabel.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             // 
-            // CO2Dim
+            // SecondLabel
             // 
-            this.CO2Dim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.CO2Dim.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.CO2Dim.ForeColor = System.Drawing.SystemColors.Control;
-            this.CO2Dim.Location = new System.Drawing.Point(0, 20);
-            this.CO2Dim.Margin = new System.Windows.Forms.Padding(0);
-            this.CO2Dim.Name = "CO2Dim";
-            this.CO2Dim.Size = new System.Drawing.Size(75, 20);
-            this.CO2Dim.TabIndex = 1;
-            this.CO2Dim.Text = "? ? ?";
-            this.CO2Dim.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.SecondLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.SecondLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.SecondLabel.ForeColor = System.Drawing.SystemColors.Control;
+            this.SecondLabel.Location = new System.Drawing.Point(0, 20);
+            this.SecondLabel.Margin = new System.Windows.Forms.Padding(0);
+            this.SecondLabel.Name = "SecondLabel";
+            this.SecondLabel.Size = new System.Drawing.Size(75, 20);
+            this.SecondLabel.TabIndex = 1;
+            this.SecondLabel.Text = "? ? ?";
+            this.SecondLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // Deskband
             // 
             this.BackColor = System.Drawing.Color.Black;
-            this.Controls.Add(this.CO2Dim);
-            this.Controls.Add(this.humidityAndTemperature);
+            this.Controls.Add(this.SecondLabel);
+            this.Controls.Add(this.FirstLabel);
             this.Name = "Deskband";
             this.Size = new System.Drawing.Size(75, 40);
             this.ResumeLayout(false);
+
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            Program.DetectionsService.GetDetectionsForSensor("dht11", (dhtDetections) =>
+            Program.DetectionsService.GetLastSensorDetections((detections) =>
             {
-                if (dhtDetections == null)
-                    return;
-
-                var humidity = dhtDetections.Detections.Find(x => x.Name == "h");
-                var temperature = dhtDetections.Detections.Find(x => x.Name == "t");
-
-                if (temperature == null || humidity == null)
-                    return;
-
-                humidityAndTemperature.Invoke((MethodInvoker)delegate
-                {
-                    humidityAndTemperature.Text = $"{temperature.Value} °C, {humidity.Value} %";
-
-                    if(Program.Configuration.UI.UseColorsForText)
-                    {
-                        var config = Program.Configuration.UI.SensorDetections
-                            .Where(x => x.Name == "dht11_humidity")
-                            .Where(x => InRange(humidity.Value, x.Values[0], x.Values[1]))
-                            .FirstOrDefault();
-
-                        if(config != null && !string.IsNullOrEmpty(config.Color))
-                        {
-                            humidityAndTemperature.ForeColor = GetColorFromHex(config.Color);
-                        }
-                        else
-                        {
-                            humidityAndTemperature.ForeColor = Color.White;
-                        }
-                    }
-                });
-            });
-
-            Program.DetectionsService.GetDetectionsForSensor("mh-z19b", (z19Detections) =>
-            {
-                if (z19Detections == null)
-                    return;
-
-                var CO2Value = z19Detections.Detections.Find(x => x.Name == "co2");
-
-                if (CO2Value == null)
-                    return;
-
-
-                CO2Dim.Invoke((MethodInvoker)delegate
-                {
-
-                    CO2Dim.Text = $"{CO2Value.Value} Ppm";
-
-                    if (Program.Configuration.UI.UseColorsForText)
-                    {
-                        var config = Program.Configuration.UI.SensorDetections
-                                .Where(x => x.Name == "mh-z19b_co2")
-                                .Where(x => InRange(CO2Value.Value, x.Values[0], x.Values[1]))
-                                .FirstOrDefault();
-
-                        if (config != null && !string.IsNullOrEmpty(config.Color))
-                        {
-                            CO2Dim.ForeColor = GetColorFromHex(config.Color);
-                        } else
-                        {
-                            CO2Dim.ForeColor = Color.White;
-                        }
-                    }
-                    
-                });
+                ApplyLabel(FirstLabel, Program.Configuration.UI.FirstLabel, detections);
+                ApplyLabel(SecondLabel, Program.Configuration.UI.SecondLabel, detections);
             });
         }
 
-        private void Deskband_Context_Show_Options_Click(object sender, EventArgs e)
+        private void ApplyLabel(Label label, LabelConfiguration labelConfiguration, List<SensorDetection> detections)
         {
-            ExploreFile(Path.Combine(Program.CurrentDir, "appsettings.json"));
+            label.Invoke((MethodInvoker)delegate
+            {
+                var labelText = labelConfiguration.Format.ToString();
+                var labelColor = label.ForeColor;
+
+                foreach (var detection in detections)
+                {
+                    var detectionStamp = $"[[{detection.SensorName},{detection.Name}]]";
+                    labelText = labelText.Replace(detectionStamp, detection.Value.ToString());
+
+                    if (labelConfiguration.CustomColors)
+                    {
+                        var colorConfig = labelConfiguration.Colors
+                            .FirstOrDefault(x => x.SensorName == detection.SensorName &&
+                                        x.SensorDetection == detection.Name &&
+                                        detection.Value >= x.Values[0] && detection.Value <= x.Values[1]);
+
+                        if (colorConfig != null)
+                        {
+                            int argb = int.Parse(colorConfig.ColorHEX.Replace("#", ""),
+                                NumberStyles.HexNumber);
+
+                            labelColor = Color.FromArgb(argb);
+                        }
+                    }
+                }
+
+                label.Text = labelText;
+                label.ForeColor = labelColor;
+            });
         }
 
-        private void Deskband_Context_Reinstall_Click(object sender, EventArgs e)
+        private bool ExploreFile(string filePath)
         {
-            RunBat(Path.Combine(Program.CurrentDir, "install_script.bat"), Environment.CurrentDirectory);
-        }
-
-        private void Deskband_Context_Uninstall_Click(object sender, EventArgs e)
-        {
-            RunBat(Path.Combine(Program.CurrentDir, "uninstall_script.bat"), Environment.CurrentDirectory);
-        }
-
-        private void Deskband_Context_About_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.2" +
-                "\n\n" +
-                "26.03.2022");
-        }
-
-        public bool ExploreFile(string filePath)
-        {
-            if (!System.IO.File.Exists(filePath))
+            if (!File.Exists(filePath))
             {
                 return false;
             }
             //Clean up file path so it can be navigated OK
-            filePath = System.IO.Path.GetFullPath(filePath);
-            System.Diagnostics.Process.Start("explorer.exe", string.Format("/select,\"{0}\"", filePath));
+            filePath = Path.GetFullPath(filePath);
+            Process.Start("explorer.exe", string.Format("/select,\"{0}\"", filePath));
             return true;
         }
 
-        private Color GetColorFromHex(string hex)
-        {
-            int argb = int.Parse(hex.Replace("#", ""), NumberStyles.HexNumber);
-            return Color.FromArgb(argb);
-        }
-
-        bool InRange(double numberToCheck, int bottom, int top)
-        {
-            return (numberToCheck >= bottom && numberToCheck <= top);
-        }
-        public void RunBat(string filePath, string workingDir)
+        private void RunBat(string filePath, string workingDir)
         {
             try
             {

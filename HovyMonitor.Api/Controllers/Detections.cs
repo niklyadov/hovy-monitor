@@ -2,6 +2,8 @@
 using HovyMonitor.Entity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HovyMonitor.Api.Controllers
 {
@@ -20,13 +22,23 @@ namespace HovyMonitor.Api.Controllers
 
         [HttpGet]
         [Route("last")]
-        public IActionResult GetSensorDetections([FromQuery] string sensorName)
+        public IActionResult GetLastSensorDetections([FromQuery] string sensorName)
         {
-            if(!_sensorDetections.TryGetLastDetection(sensorName, out SensorDetections result))
+
+            if (!_sensorDetections.TryGetLastDetections(sensorName, out List<SensorDetection> result))
             {
                 return NotFound();
             }
             return Ok(result);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSensorDetections([FromRoute] int accuracyMinutes = 10)
+        {
+            var detections = await _sensorDetections.GetListDetections();
+
+            return Ok(detections);
+        }
+
     }
 }

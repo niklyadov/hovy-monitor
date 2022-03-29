@@ -1,36 +1,55 @@
 #include "DHT.h"
-#define LEDPIN 13 // Indicator led pin
-#define DHTPIN 2 // DHT sensor pin
-DHT dht(DHTPIN, DHT11);  // Initialize sensor
+#include <Arduino.h>
+#include "MHZ19_uart.h"
 
-void setup() {
+#define LEDPIN 13   // Indicator led pin
+#define DHTPIN 2    // DHT sensor pin
+#define MHZRXPIN 4  // mh-z19
+#define MHZTXPIN 3  // mh-z19
+#define MHZPWMPIN 5 // mh-z19
+DHT dht(DHTPIN, DHT11);
+MHZ19_uart mhz19;
+ 
+void setup()
+{
   pinMode(LEDPIN, OUTPUT);
+  digitalWrite(LEDPIN, HIGH);
+  
+  int status;
+ 
   Serial.begin(9600);
+ 
+  mhz19.begin(MHZRXPIN, MHZTXPIN);
   dht.begin();
-}
+  mhz19.setAutoCalibration(false);
+  
+  status = mhz19.getStatus();
+  delay(500);
+  
+  status = mhz19.getStatus();
+  delay(500);
 
+  digitalWrite(LEDPIN, LOW);
+}
+ 
 void loop() {
-  delay(1000);
+  delay(3000);
   
   digitalWrite(LEDPIN, HIGH);
 
   float t = dht.readTemperature();
   float h = dht.readHumidity();
-
-  // todo - co2
-  int c = 800;
+  int c = mhz19.getPPM();
 
   digitalWrite(LEDPIN, LOW);
 
-
-  if(!isnan(c)) {
-    Serial.print("mh-z19b:co2=");
+  if(!isnan(c) && c > 0) {
+    Serial.print("mh-z19:co2=");
     Serial.print(c);
     Serial.println(";");
-      
-    delay(4500);
+
   } else {
-     Serial.println("mh-z19b:co2=0;");
+     Serial.println("mh-z19:co2=0;");
   }
 
   if(!isnan(h) && !isnan(t)) {
@@ -39,8 +58,7 @@ void loop() {
       Serial.print(";h=");
       Serial.print(h);
       Serial.println(";");
-      
-      delay(4500);
+
   } else {
      Serial.println("dht11:t=0;h=0;");
   }

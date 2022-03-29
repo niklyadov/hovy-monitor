@@ -1,25 +1,15 @@
-﻿using System.Globalization;
+﻿using System;
 
 namespace HovyMonitor.Entity
 {
     public class SensorDetection
     {
+        public int Id { get; set; }
         public string Name { get; set; }
         public double Value { get; set; }
+        public DateTime DateTime { get; set; }
+        public string SensorName { get; set; }
+        public string FullName { get; set; }
 
-        public SensorDetection()
-        {
-
-        }
-
-        public SensorDetection(string name, string value)
-        {
-            Name = name;
-
-            if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double valueD))
-            {
-                Value = valueD;
-            }
-        }
     }
 }
