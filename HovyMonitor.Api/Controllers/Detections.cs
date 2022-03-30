@@ -2,6 +2,7 @@
 using HovyMonitor.Entity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -33,9 +34,9 @@ namespace HovyMonitor.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetSensorDetections([FromRoute] int accuracyMinutes = 10)
+        public async Task<IActionResult> GetSensorDetections([FromQuery] string date, [FromQuery] int accuracyMinutes = 10)
         {
-            var detections = await _sensorDetections.GetListDetections();
+            var detections = await _sensorDetections.GetListDetections(DateTime.Parse(date));
 
             return Ok(detections);
         }

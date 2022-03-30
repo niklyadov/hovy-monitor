@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.plotView1 = new OxyPlot.WindowsForms.PlotView();
+            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.SuspendLayout();
             // 
             // plotView1
@@ -46,11 +47,20 @@
             this.plotView1.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotView1.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
+            // dateTimePicker1
+            // 
+            this.dateTimePicker1.Location = new System.Drawing.Point(13, 13);
+            this.dateTimePicker1.Name = "dateTimePicker1";
+            this.dateTimePicker1.Size = new System.Drawing.Size(182, 29);
+            this.dateTimePicker1.TabIndex = 1;
+            this.dateTimePicker1.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(784, 361);
+            this.Controls.Add(this.dateTimePicker1);
             this.Controls.Add(this.plotView1);
             this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -67,5 +77,6 @@
         #endregion
 
         private OxyPlot.WindowsForms.PlotView plotView1;
+        private System.Windows.Forms.DateTimePicker dateTimePicker1;
     }
 }

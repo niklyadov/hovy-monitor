@@ -53,9 +53,9 @@ namespace HovyMonitor.DeskBar.Win
             cm.MenuItems.Add("-");
 
             cm.MenuItems.Add("About", (object sender, EventArgs e) =>
-                MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.3" +
+                MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.4" +
                     "\n\n" +
-                    "29.03.2022"));
+                    "31.03.2022"));
 
             ContextMenu = cm;
 
@@ -120,12 +120,13 @@ namespace HovyMonitor.DeskBar.Win
         {
             label.Invoke((MethodInvoker)delegate
             {
-                var labelText = labelConfiguration.Format.ToString();
+                var labelFormat = labelConfiguration.Format.ToString();
+                var labelText = labelFormat;
                 var labelColor = label.ForeColor;
 
                 foreach (var detection in detections)
                 {
-                    var detectionStamp = $"[[{detection.SensorName},{detection.Name}]]";
+                    var detectionStamp = "{{" + $"{detection.SensorName},{detection.Name}" + "}}";
                     labelText = labelText.Replace(detectionStamp, detection.Value.ToString());
 
                     if (labelConfiguration.CustomColors)
@@ -145,7 +146,14 @@ namespace HovyMonitor.DeskBar.Win
                     }
                 }
 
-                label.Text = labelText;
+                if(labelText != labelFormat)
+                {
+                    label.Text = labelText;
+                } else
+                {
+                    label.Text = " . . . ";
+                }
+
                 label.ForeColor = labelColor;
             });
         }

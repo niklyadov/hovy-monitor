@@ -59,7 +59,7 @@ namespace HovyMonitor.DeskBar.Win
             });
         }
 
-        public void GetSensorDetectionsList(Action<List<SensorDetection>> action)
+        public void GetSensorDetectionsList(Action<List<SensorDetection>> action, DateTime selectDatetime)
         {
             Task.Run(() =>
             {
@@ -68,7 +68,8 @@ namespace HovyMonitor.DeskBar.Win
                     string contents;
                     using (var wc = new System.Net.WebClient())
                     {
-                        var url = _configuration.BaseUri + _configuration.ListOfSensorDetectionsUrl;
+                        var url = (_configuration.BaseUri + _configuration.ListOfSensorDetectionsUrl)
+                            .Replace("{{date}}", selectDatetime.ToShortDateString());
 
                         contents = wc.DownloadString(url);
                     }

@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 
 namespace HovyMonitor.Api
@@ -28,6 +29,8 @@ namespace HovyMonitor.Api
         {
             services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
             services.Configure<Configuration>(Configuration.GetSection("AppConfiguration"));
+            services.AddLogging(loggingBuilder =>
+                loggingBuilder.AddFile(Configuration.GetSection("Logging")));
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

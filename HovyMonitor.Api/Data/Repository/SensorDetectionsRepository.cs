@@ -1,6 +1,9 @@
 ﻿using HovyMonitor.Entity;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace HovyMonitor.Api.Data.Repository
@@ -13,8 +16,13 @@ namespace HovyMonitor.Api.Data.Repository
             Context = context;
         }
 
-        public async Task<List<SensorDetection>> GetAll() =>
-            await Context.Set<SensorDetection>().ToListAsync();
+        public async Task<List<SensorDetection>> GetList(Expression<Func<SensorDetection, bool>> predicate)
+        {
+            return await Context
+                            .Set<SensorDetection>()
+                            .Where(predicate)
+                            .ToListAsync();
+        }
 
         public async Task<SensorDetection> GetById(int id) =>
             await Context.Set<SensorDetection>().FindAsync(id);

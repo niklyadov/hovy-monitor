@@ -25,13 +25,13 @@ namespace HovyMonitor.Api.Services
             _serviceScopeFactory = serviceScopeFactory;
         }
 
-        public async Task<List<SensorDetection>> GetListDetections()
+        public async Task<List<SensorDetection>> GetListDetections(DateTime date)
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var repository = scope.ServiceProvider
                 .GetRequiredService<SensorDetectionsRepository>();
 
-            return await repository.GetAll();
+            return await repository.GetList(x => x.DateTime.Date == date.Date);
         }
 
         public async Task WriteDetectionsAsync(string detections)

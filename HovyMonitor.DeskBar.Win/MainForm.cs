@@ -1,7 +1,9 @@
-﻿using OxyPlot;
+﻿using HovyMonitor.Entity;
+using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -26,43 +28,20 @@ namespace HovyMonitor.DeskBar.Win
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            dateTimePicker1.Value = DateTime.Now;
 
-            #region shit
-            //var chartArea = chart1.ChartAreas[0];
-            //chartArea.AxisX.ScaleView.Zoomable = true;
-            //chartArea.CursorX.AutoScroll = true;
-            //chartArea.CursorX.IsUserSelectionEnabled = true;
-            ////chartArea.AxisX.LabelStyle.Format = "dd/MM/yyyy";
-            //chartArea.AxisX.Interval = 1;
-            ////chartArea.AxisX.IntervalType = DateTimeIntervalType.Days;
-            //chartArea.AxisX.IntervalOffset = 1;
-            ////chartArea.AxisX.Maximum = DateTime.Now.Ticks;
+            Program.DetectionsService.GetSensorDetectionsList((detections) =>
+                plotView1.Invoke((MethodInvoker)delegate
+                {
+                    plotView1.Model = GetPlotModelDetections(detections);
+                }),
+                dateTimePicker1.Value
+            );
+        }
 
-
-            //var random = new Random();
-            //var series = new Series()
-            //{
-            //    Color = Color.Red,
-            //    //Legend = "Legend",
-            //    ChartArea = "ChartArea1",
-            //    ChartType = SeriesChartType.FastLine,
-            //    XValueType = ChartValueType.DateTime
-            //};
-
-            //DateTime dt = DateTime.Now;
-
-            //for (int i = 1; i < 100; i++)
-            //{
-            //    dt = dt.AddDays(i);
-            //    series.Points.AddXY(dt, random.NextDouble() * 25);
-            //}
-
-            //chart1.Series.Clear();
-            //chart1.Series.Add(series);
-
-            #endregion
-
-            TimeSpanAxis xAxis = new TimeSpanAxis
+        private PlotModel GetPlotModelDetections(List<SensorDetection> detections)
+        {
+            var xAxis = new TimeSpanAxis
             {
                 Position = AxisPosition.Bottom,
                 Title = "Time Of Day",
@@ -70,35 +49,42 @@ namespace HovyMonitor.DeskBar.Win
                 MinorGridlineStyle = LineStyle.None,
             };
 
-            var myModel = new PlotModel
+            var plotModel = new PlotModel
             {
                 Title = "Temperature, Humidity, CO2"
             };
-            myModel.Axes.Add(xAxis);
-            myModel.Axes.Add(new LinearAxis());
+            plotModel.Axes.Add(xAxis);
+            plotModel.Axes.Add(new LinearAxis());
 
-            Program.DetectionsService.GetSensorDetectionsList((detections) =>
+            var grouped = detections.GroupBy(x => x.FullName);
+            foreach (var groupedDetections in grouped)
             {
-                var grouped = detections.GroupBy(x => x.FullName);
-                foreach (var groupedDetections in grouped)
+                FunctionSeries fs = new FunctionSeries()
                 {
-                    FunctionSeries fs = new FunctionSeries()
-                    {
-                        Title = groupedDetections.First().FullName
-                    };
+                    Title = groupedDetections.First().FullName
+                };
 
-                    foreach (var detection in groupedDetections)
-                    {
-                        var point = new DataPoint(TimeSpanAxis.ToDouble(detection.DateTime.TimeOfDay), detection.Value);
-                        fs.Points.Add(point);
-                    }
-
-                    myModel.Series.Add(fs);
+                foreach (var detection in groupedDetections)
+                {
+                    var point = new DataPoint(TimeSpanAxis.ToDouble(detection.DateTime.TimeOfDay), detection.Value);
+                    fs.Points.Add(point);
                 }
-            });
 
-          
-            plotView1.Model = myModel;
+                plotModel.Series.Add(fs);
+            }
+
+            return plotModel;
+        }
+
+        private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
+        {
+            Program.DetectionsService.GetSensorDetectionsList((detections) =>
+                plotView1.Invoke((MethodInvoker)delegate
+                {
+                    plotView1.Model = GetPlotModelDetections(detections);
+                }),
+                ((DateTimePicker)sender).Value
+            );
         }
     }
 }
