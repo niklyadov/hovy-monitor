@@ -4,16 +4,25 @@
 
 #define LEDPIN 13   // Indicator led pin
 #define DHTPIN 2    // DHT sensor pin
+#define DHTTYPE DHT11
 #define MHZRXPIN 4  // mh-z19
 #define MHZTXPIN 3  // mh-z19
 #define MHZPWMPIN 5 // mh-z19
-DHT dht(DHTPIN, DHT11);
+#define RSTPIN 12
+DHT dht(DHTPIN, DHTTYPE);
 MHZ19_uart mhz19;
+
+int errorsCount = 0;
  
 void setup()
 {
+  errorsCount = 0;
+  
   pinMode(LEDPIN, OUTPUT);
   digitalWrite(LEDPIN, HIGH);
+
+  pinMode(RSTPIN, OUTPUT);
+  digitalWrite(RSTPIN, HIGH);
   
   int status;
  
@@ -21,7 +30,7 @@ void setup()
  
   mhz19.begin(MHZRXPIN, MHZTXPIN);
   dht.begin();
-  mhz19.setAutoCalibration(false);
+  mhz19.setAutoCalibration(true);
   
   status = mhz19.getStatus();
   delay(500);
@@ -33,7 +42,7 @@ void setup()
 }
  
 void loop() {
-  delay(3000);
+  delay(5000);
   
   digitalWrite(LEDPIN, HIGH);
 
@@ -50,18 +59,28 @@ void loop() {
 
   } else {
      Serial.println("mh-z19:co2=0;");
+     errorsCount++;
   }
 
-  if(!isnan(h) && !isnan(t)) {
-      Serial.print("dht11:t=");
-      Serial.print(t);
-      Serial.print(";h=");
-      Serial.print(h);
-      Serial.println(";");
-
-  } else {
+  if(!isnan(t) && !isnan(t)) {
+     Serial.print("dht11:t=");
+     Serial.print(t);
+      
+     Serial.print(";h=");
+     Serial.print(h);
+     Serial.println(";");
+  }
+ else {
      Serial.println("dht11:t=0;h=0;");
+     errorsCount++;
   }
 
-  
+  if(mhz19.getStatus() == -1) {
+    errorsCount++;
+  }
+
+  if(errorsCount > 3) {
+    Serial.end();
+    digitalWrite(RSTPIN, LOW);
+  }
 }
