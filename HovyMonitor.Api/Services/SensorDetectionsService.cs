@@ -120,14 +120,24 @@ namespace HovyMonitor.Api.Services
 
         public bool TryGetLastDetections(string sensorName, out List<SensorDetection> result)
         {
-            var detections = string.IsNullOrEmpty(sensorName)
-                ? _sensorDetections : _sensorDetections.Where(x => x.SensorName.Equals(sensorName));
+            var detections = GetDetections(sensorName);
 
             result = detections
                 .GroupBy(x => x.FullName)
-                .Select(x => x.First()).ToList();
+                .Select(x => x.First())
+                .ToList();
 
-            return result != null;
+            return result.Any();
+        }
+
+        private List<SensorDetection> GetDetections(string sensorName)
+        {
+            if (string.IsNullOrEmpty(sensorName) || _sensorDetections is null)
+                return _sensorDetections ?? new List<SensorDetection>();
+
+            return _sensorDetections
+                .Where(x => x.SensorName.Equals(sensorName))
+                .ToList();
         }
     }
 }
