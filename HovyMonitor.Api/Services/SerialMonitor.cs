@@ -16,9 +16,12 @@ public class SerialMonitor
     private readonly Queue<CommandAwaiter> _commands = new();
     private readonly SerialPortConfiguration _configuration;
     private readonly ILogger<SerialMonitor> _logger;
-    
+    private DateTime? _lastCommandExecutionTime = null;
+    private Task _commandHandleTask = null;
+
     private SerialPort _port;
     private CancellationToken _cancellationToken;
+    private CancellationTokenSource _commandHandleTaskCts;
     
     public SerialMonitor(IOptions<Configuration> configuration, ILogger<SerialMonitor> logger)
     {
@@ -29,43 +32,90 @@ public class SerialMonitor
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         _cancellationToken = cancellationToken;
-        _port = await GetArduinoPort();
-
-        if(_port == null)
-        {
-            throw new Exception("Can`t find arduino port");
-        }
-
-        await Task.Run(async () =>
-        {
-            while(!_cancellationToken.IsCancellationRequested)
-            {
-                await Task.Delay(_configuration.SendInterval, _cancellationToken);
-                
-                if(_commands.Any())
-                {
-                    var command = _commands.Dequeue();
-                    _logger.LogDebug("Working with a command {CommandName}", command.CommandName);
-                    
-                    SendCommand(_port, command.CommandName);
-                    _logger.LogDebug("Success send command {CommandName} to board", command.CommandName);
-                    
-                    command.CommandResponse = await WaitCommandResponse(_cancellationToken);
-                    
-                    _logger.LogDebug("Success receive a data for command {CommandName}", command.CommandName);
-                }
-            }
-        }, _cancellationToken);
+        
+        await Task.Run(HealthCheck, _cancellationToken);
     }
     
     public void Send(CommandAwaiter command)
     {
         _commands.Enqueue(command);
-        
         _logger.LogDebug("Command {CommandName} enqueued to queue", command.CommandName);
     }
 
     #region Private
+
+    private async Task HealthCheck()
+    {
+        while(!_cancellationToken.IsCancellationRequested)
+        {
+            if (!_lastCommandExecutionTime.HasValue)
+            {
+                _logger.LogDebug("Commands listener is not started");
+                await StartHandleCommands();
+            }
+            else
+            {
+                var lastCmdDiffTime = DateTime.UtcNow - _lastCommandExecutionTime.Value;
+
+                _logger.LogDebug("Health {HealthType} {SecondsSinceCommandExecuted}", lastCmdDiffTime.TotalSeconds < 5 ? "good": "bad", lastCmdDiffTime.TotalSeconds);
+
+                if (lastCmdDiffTime.TotalSeconds > 10)
+                {
+                    _logger.LogWarning("Commands not executed for many time ({TimeDifference})", lastCmdDiffTime);
+                    await RestartHandleCommands();
+                }
+            }
+
+            await Task.Delay(3000, _cancellationToken);
+        }
+    }
+
+    private async Task StartHandleCommands()
+    {
+        if(_port == null || !_port.IsOpen)
+        {
+            _port = await GetArduinoPort();
+        }
+
+        _logger.LogDebug("Starting a Commands listener");
+        _commandHandleTaskCts = new CancellationTokenSource();
+        _commandHandleTask = Task.Run(HandleCommands, _commandHandleTaskCts.Token);
+    }
+    
+    private async Task RestartHandleCommands()
+    {
+        _port.Close();
+        _port.Dispose();
+
+        _commandHandleTaskCts.Cancel();
+        _commandHandleTask.Dispose();
+        _lastCommandExecutionTime = null;
+
+        await StartHandleCommands();
+    }
+
+    private async Task HandleCommands()
+    {
+        while(!_cancellationToken.IsCancellationRequested)
+        {
+            await Task.Delay(_configuration.SendInterval, _cancellationToken);
+
+            if (!_commands.Any()) continue;
+            
+            var command = _commands.Dequeue();
+            _logger.LogDebug("Working with a command {CommandName}", command.CommandName);
+                    
+            SendCommand(_port, command.CommandName);
+            _logger.LogDebug("Success send command {CommandName} to board", command.CommandName);
+                    
+            command.CommandResponse = await WaitCommandResponse(_cancellationToken);
+                    
+            _logger.LogDebug("Success receive a data for command {CommandName}", command.CommandName);
+                    
+            _lastCommandExecutionTime = DateTime.UtcNow;
+        }
+    }
+
     private async Task<string> WaitCommandResponse(CancellationToken cancellationToken, int countRetries = 2, int currentRetry = 1)
     {
         _logger.LogDebug("Wait command response, retry: ({Retry}/{TotalRetries})",currentRetry, countRetries);
@@ -100,7 +150,7 @@ public class SerialMonitor
     private async Task<SerialPort> GetArduinoPort()
     {
         var serialPortNames = SerialPort.GetPortNames();
-        _logger.LogDebug("Search a arduino port. Total ports count {PortsCount}", serialPortNames.Length);
+        _logger.LogDebug("Search an arduino port. Total ports count {PortsCount}", serialPortNames.Length);
         foreach (var portName in serialPortNames)
         {
             var serialPort = new SerialPort(portName, _configuration.BaundRate);
@@ -120,6 +170,7 @@ public class SerialMonitor
             _logger.LogDebug("Port with name {PortName} is a not arduino port", portName);
         }
 
+        await Task.Delay(500);
         return await GetArduinoPort();
     }
 
