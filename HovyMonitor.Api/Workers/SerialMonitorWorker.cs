@@ -34,13 +34,13 @@ namespace HovyMonitor.Api.Workers
                 commandDht11.CommandResponseReceived += async response =>
                     await sensorDetections.WriteDetectionsAsync(response);
                 
-                _serialMonitor.SendCommand(commandDht11);
+                _serialMonitor.Send(commandDht11);
                 
                 var commandMhz19 = new CommandAwaiter("mhz19_dt");
                 commandMhz19.CommandResponseReceived += async response =>
                     await sensorDetections.WriteDetectionsAsync(response);
                 
-                _serialMonitor.SendCommand(commandMhz19);
+                _serialMonitor.Send(commandMhz19);
 
                 await Task.Delay(5000, stoppingToken);
             }

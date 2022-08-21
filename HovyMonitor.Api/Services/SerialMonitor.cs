@@ -13,7 +13,7 @@ namespace HovyMonitor.Api.Services;
 
 public class SerialMonitor
 {
-    private readonly Stack<CommandAwaiter> _commands = new();
+    private readonly Queue<CommandAwaiter> _commands = new();
     private readonly SerialPortConfiguration _configuration;
     private readonly ILogger<SerialMonitor> _logger;
     
@@ -44,29 +44,34 @@ public class SerialMonitor
                 
                 if(_commands.Any())
                 {
-                    var command = _commands.Pop();
-                    _logger.LogDebug("Work with a command {CommandName}", command.CommandName);
+                    var command = _commands.Dequeue();
+                    _logger.LogDebug("Working with a command {CommandName}", command.CommandName);
                     
                     SendCommand(_port, command.CommandName);
+                    _logger.LogDebug("Success send command {CommandName} to board", command.CommandName);
+                    
                     command.CommandResponse = await WaitCommandResponse(_cancellationToken);
+                    
+                    _logger.LogDebug("Success receive a data for command {CommandName}", command.CommandName);
                 }
             }
         }, _cancellationToken);
     }
     
-    public void SendCommand(CommandAwaiter command)
+    public void Send(CommandAwaiter command)
     {
-        _commands.Push(command);
+        _commands.Enqueue(command);
         
-        _logger.LogDebug("Command {CommandName} pushed to stack", command.CommandName);
+        _logger.LogDebug("Command {CommandName} enqueued to queue", command.CommandName);
     }
 
     #region Private
-    private async Task<string> WaitCommandResponse(CancellationToken cancellationToken, int countRetries = 2, int currentRetry = 0)
+    private async Task<string> WaitCommandResponse(CancellationToken cancellationToken, int countRetries = 2, int currentRetry = 1)
     {
-        if (currentRetry > countRetries)
+        _logger.LogDebug("Wait command response, retry: ({Retry}/{TotalRetries})",currentRetry, countRetries);
+        
+        if (currentRetry >= countRetries)
         {
-            _logger.LogDebug("Stop waiting response retry ({Retry}/{TotalRetries}",currentRetry, countRetries );
             return string.Empty;
         }
 
@@ -76,6 +81,11 @@ public class SerialMonitor
         {
             throw new Exception("Port is null");
         }
+        
+        if (!_port.IsOpen)
+        {
+            throw new Exception("Serial port is closed");
+        } 
 
         var responseString = _port.ReadExisting();
 
@@ -90,22 +100,27 @@ public class SerialMonitor
     private async Task<SerialPort> GetArduinoPort()
     {
         var serialPortNames = SerialPort.GetPortNames();
-        _logger.LogDebug("Search a arduino port. Total ports {Ports}", serialPortNames.Length);
+        _logger.LogDebug("Search a arduino port. Total ports count {PortsCount}", serialPortNames.Length);
         foreach (var portName in serialPortNames)
         {
             var serialPort = new SerialPort(portName, _configuration.BaundRate);
             serialPort.DataBits = _configuration.DataBits;
 
+            serialPort.PinChanged += (sender, args) =>
+            {
+                _logger.LogDebug("Wow, pin changed");
+            };
+
             if(await CheckArduinoPort(serialPort))
             {
-                _logger.LogDebug("Port with name {PortName} is a arduino port",portName);
+                _logger.LogDebug("Port with name {PortName} is a arduino port", portName);
                 return serialPort;
             }
             
-            _logger.LogDebug("Port with name {PortName} is a not arduino port",portName);
+            _logger.LogDebug("Port with name {PortName} is a not arduino port", portName);
         }
 
-        return null;
+        return await GetArduinoPort();
     }
 
     private async Task<bool> CheckArduinoPort(SerialPort serialPort, int count = 5)
@@ -155,7 +170,7 @@ public class SerialMonitor
         return serialPort.ReadExisting().Equals(pong, StringComparison.OrdinalIgnoreCase);
     }
 
-    private void SendCommand(SerialPort _port, string commandName)
+    private void SendCommand(SerialPort port, string commandName)
     {
         var maxCommandLength = 10;
 
@@ -169,7 +184,7 @@ public class SerialMonitor
 
         if (chars.Count > maxCommandLength)
         {
-            throw new InvalidOperationException("Command must be more than 10 chars");
+            throw new InvalidOperationException("Command must be less or equal 10 chars");
         }
 
         for (int i = 0; i < maxCommandLength - commandName.Length; i++)
@@ -177,8 +192,11 @@ public class SerialMonitor
             chars.Add('\0');
         }
 
-
-        _port.Write(chars.ToArray(), 0, chars.Count);
+        if (!port.IsOpen)
+        {
+            throw new Exception("Serial port is closed");
+        } 
+        port.Write(chars.ToArray(), 0, chars.Count);
     }
     #endregion
 }

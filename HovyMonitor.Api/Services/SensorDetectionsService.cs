@@ -36,16 +36,22 @@ namespace HovyMonitor.Api.Services
 
         public async Task WriteDetectionsAsync(string detections)
         {
+            // bad data, ignore that
+            if (string.IsNullOrEmpty(detections))
+            {
+                return;
+            }
+            
             var first = _sensorDetections.FirstOrDefault();
 
             if(first != null && (DateTime.Now - first.DateTime).TotalSeconds >= 60)
             {
                  var savedDetections = _sensorDetections
-                    .Take(_sensorDetections.Count() / 2)
+                    .Take(_sensorDetections.Count / 2)
                     .ToList();
 
                 _sensorDetections = _sensorDetections
-                    .TakeLast(_sensorDetections.Count() / 2)
+                    .TakeLast(_sensorDetections.Count / 2)
                     .ToList();
 
                 savedDetections = savedDetections
