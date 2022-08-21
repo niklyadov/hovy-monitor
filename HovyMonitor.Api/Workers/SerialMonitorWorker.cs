@@ -15,115 +15,44 @@ namespace HovyMonitor.Api.Workers
     {
         private readonly ILogger<SerialMonitorWorker> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly Configuration _configuration;
-        private SerialPort _port;
-        private DateTime _lifeDateTime;
+        private readonly SerialMonitor _serialMonitor;
 
         public SerialMonitorWorker(ILogger<SerialMonitorWorker> logger,
-            IServiceScopeFactory serviceScopeFactory, IOptions<Configuration> configuration)
+            IServiceScopeFactory serviceScopeFactory, SerialMonitor serialMonitor)
         {
             _logger = logger;
 
             _serviceScopeFactory = serviceScopeFactory;
 
-            _configuration = configuration.Value;
-
             _logger.LogInformation("Init success!");
 
-        }
-
-        private SerialPort RegisterPort()
-        {
-            var port = new SerialPort(_configuration.SerialPort.Name,
-                _configuration.SerialPort.BaundRate, Parity.None,
-                _configuration.SerialPort.DataBits, StopBits.One);
-            port.ReadTimeout = _configuration.SerialPort.ReadTimeout;
-            port.DtrEnable = true;
-            port.RtsEnable = true;
-            port.DataReceived += new SerialDataReceivedEventHandler(port_DataReceivedAsync);
-            _lifeDateTime = DateTime.Now;
-
-            return port;
+            _serialMonitor = serialMonitor;
         }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _serialMonitor.StartAsync(stoppingToken);
+           
+            using var scope = _serviceScopeFactory.CreateScope();
+            var sensorDetections = scope.ServiceProvider.GetRequiredService<SensorDetectionsService>();
+            
             while (!stoppingToken.IsCancellationRequested)
             {
-                var totalSecondsNoResponse = (DateTime.Now - _lifeDateTime).TotalSeconds;
-                if (_port != null && totalSecondsNoResponse > 10)
+                var commandDht11 = new CommandAwaiter("dht11_dt");
+                commandDht11.CommandResponseReceived += async response =>
                 {
-                    _logger.LogError($"No messages received {totalSecondsNoResponse} seconds");
-                }
-
-                if (_port != null && totalSecondsNoResponse > 20)
+                    await sensorDetections.WriteDetectionsAsync(response);
+                };
+                _serialMonitor.SendCommand(commandDht11);
+                
+                var commandMhz19 = new CommandAwaiter("mhz19_dt");
+                commandMhz19.CommandResponseReceived += async response =>
                 {
-                    _logger.LogError($"Reconnecting, because no messages at more than 20 seconds");
-
-                    ReconnectPort();
-                }
-
-                if (_port == null || (_port != null && !_port.IsOpen))
-                {
-                    ReconnectPort();
-                }
+                    await sensorDetections.WriteDetectionsAsync(response);
+                };
+                _serialMonitor.SendCommand(commandMhz19);
 
                 await Task.Delay(3000, stoppingToken);
             }
-        }
-        private async void port_DataReceivedAsync(object sender, SerialDataReceivedEventArgs e)
-        {
-            string readedStr;
-
-            try
-            {
-                readedStr = _port.ReadLine();
-            } catch(Exception ex)
-            {
-                _logger.LogError($"Read error {ex.Message}");
-                return;
-            }
-
-            using var scope = _serviceScopeFactory.CreateScope();
-            var sensorDetections = scope.ServiceProvider.GetRequiredService<SensorDetectionsService>();
-            await sensorDetections.WriteDetectionsAsync(readedStr);
-
-            _logger.LogDebug($"Data received: {readedStr}");
-
-            _lifeDateTime = DateTime.Now;
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-            if (_port != null && _port.IsOpen)
-            {
-                _port.Close();
-            }
-        }
-
-        private bool ConnectToPort()
-        {
-            try
-            {
-                _port.Open();
-                _logger.LogInformation("Listening started");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Connect error {ex.Message}");
-                return false;
-            }
-            
-            _logger.LogDebug($"Opened Port Info:: IsOpen: {_port.IsOpen}, Handshake: {_port.Handshake}");
-
-            return true;
-        }
-
-        private bool ReconnectPort()
-        {
-            if (_port != null && _port.IsOpen) _port.Close();
-            _port = RegisterPort();
-            return ConnectToPort();
         }
     }
 }
