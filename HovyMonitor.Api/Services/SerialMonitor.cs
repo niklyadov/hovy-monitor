@@ -5,22 +5,20 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using HovyMonitor.Api.Entity;
+using HovyMonitor.Api.Workers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace HovyMonitor.Api.Workers;
+namespace HovyMonitor.Api.Services;
 
 public class SerialMonitor
 {
-    private const int _sendMessagesIntervalMs = 1000;
-    private const int _readMessagesTimeoutMs = 1000;
-    private SerialPort? _port;
-    private Stack<CommandAwaiter> _commands = new();
-    private Task? _backgroundTask = null;
-    private CancellationTokenSource? _cancellationTokenSource;
-    private CancellationToken _cancellationToken;
+    private readonly Stack<CommandAwaiter> _commands = new();
     private readonly SerialPortConfiguration _configuration;
     private readonly ILogger<SerialMonitor> _logger;
+    
+    private SerialPort _port;
+    private CancellationToken _cancellationToken;
     
     public SerialMonitor(IOptions<Configuration> configuration, ILogger<SerialMonitor> logger)
     {
@@ -42,33 +40,37 @@ public class SerialMonitor
         {
             while(!_cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(_sendMessagesIntervalMs, _cancellationToken);
+                await Task.Delay(_configuration.SendInterval, _cancellationToken);
                 
                 if(_commands.Any())
                 {
-                    var commandAwaiter = _commands.Pop();
-
-                    SendCommand(_port, commandAwaiter.CommandName);
-
-                    commandAwaiter.CommandResponse = await WaitCommandResponse(_cancellationToken);
+                    var command = _commands.Pop();
+                    _logger.LogDebug("Work with a command {CommandName}", command.CommandName);
+                    
+                    SendCommand(_port, command.CommandName);
+                    command.CommandResponse = await WaitCommandResponse(_cancellationToken);
                 }
             }
         }, _cancellationToken);
     }
-
-    public void Stop()
+    
+    public void SendCommand(CommandAwaiter command)
     {
-        _cancellationTokenSource?.Cancel();
+        _commands.Push(command);
+        
+        _logger.LogDebug("Command {CommandName} pushed to stack", command.CommandName);
     }
 
+    #region Private
     private async Task<string> WaitCommandResponse(CancellationToken cancellationToken, int countRetries = 2, int currentRetry = 0)
     {
         if (currentRetry > countRetries)
         {
+            _logger.LogDebug("Stop waiting response retry ({Retry}/{TotalRetries}",currentRetry, countRetries );
             return string.Empty;
         }
 
-        await Task.Delay(_readMessagesTimeoutMs / countRetries, cancellationToken);
+        await Task.Delay(_configuration.ReadTimeout / countRetries, cancellationToken);
 
         if (_port == null)
         {
@@ -85,24 +87,22 @@ public class SerialMonitor
         return await WaitCommandResponse(cancellationToken, countRetries, currentRetry + 1);
     }
 
-    public void SendCommand(CommandAwaiter command)
-    {
-        _commands.Push(command);
-    }
-
-    private async Task<SerialPort?> GetArduinoPort()
+    private async Task<SerialPort> GetArduinoPort()
     {
         var serialPortNames = SerialPort.GetPortNames();
-
-        foreach (var portname in serialPortNames)
+        _logger.LogDebug("Search a arduino port. Total ports {Ports}", serialPortNames.Length);
+        foreach (var portName in serialPortNames)
         {
-            var serialPort = new SerialPort(portname, _configuration.BaundRate);
+            var serialPort = new SerialPort(portName, _configuration.BaundRate);
             serialPort.DataBits = _configuration.DataBits;
 
             if(await CheckArduinoPort(serialPort))
             {
+                _logger.LogDebug("Port with name {PortName} is a arduino port",portName);
                 return serialPort;
             }
+            
+            _logger.LogDebug("Port with name {PortName} is a not arduino port",portName);
         }
 
         return null;
@@ -113,10 +113,8 @@ public class SerialMonitor
         try
         {
             serialPort.ReadTimeout = 1000;
-            serialPort.ErrorReceived += (object sender, SerialErrorReceivedEventArgs e) =>
-            {
-                throw new Exception("Some error with serial");
-            };
+            serialPort.ErrorReceived += (_, _) 
+                => throw new Exception("Some error with serial");
            
             serialPort.Open();
 
@@ -152,7 +150,7 @@ public class SerialMonitor
 
         SendCommand(serialPort, ping);
 
-        await Task.Delay(_sendMessagesIntervalMs);
+        await Task.Delay(_configuration.SendInterval, _cancellationToken);
 
         return serialPort.ReadExisting().Equals(pong, StringComparison.OrdinalIgnoreCase);
     }
@@ -182,4 +180,5 @@ public class SerialMonitor
 
         _port.Write(chars.ToArray(), 0, chars.Count);
     }
+    #endregion
 }

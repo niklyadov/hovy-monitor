@@ -20,5 +20,6 @@ namespace HovyMonitor.Api.Entity
         public int BaundRate { get; set; } = 9600;
         public byte DataBits { set; get; } = 8;
         public int ReadTimeout { get; set; } = 2000;
+        public int SendInterval { get; set; } = 2000;
     }
 }

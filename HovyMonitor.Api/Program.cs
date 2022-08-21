@@ -42,6 +42,8 @@ builder.Services.AddDbContext<ApplicationContext>(options =>
 
 builder.Services.AddScoped<SensorDetectionsRepository>();
 
+builder.Services.AddSingleton<SerialMonitor>();
+
 builder.Services.AddSingleton<SensorDetectionsService>();
 
 builder.Services.AddHostedService<SerialMonitorWorker>();
