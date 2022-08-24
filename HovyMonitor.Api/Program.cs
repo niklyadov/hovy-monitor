@@ -13,62 +13,74 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+CreateHostBuilder(args)
+    .Build()
+    .Run();
 
-builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
+static IHostBuilder CreateHostBuilder(string[] args) =>
+    Host.CreateDefaultBuilder(args)
+        .ConfigureWebHostDefaults(webBuilder => {
+            webBuilder.UseStartup<Startup>();
+        })
+        .UseWindowsService()
+        .UseSerilog((hostingContext, loggerConfiguration)
+            => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration));
 
-var configuration = builder.Configuration;
 
-var appConfiguration = configuration.GetSection("AppConfiguration");
-builder.Services.Configure<Configuration>(appConfiguration);
-
-builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
-builder.Services.Configure<Configuration>(configuration.GetSection("AppConfiguration"));
-builder.Services.AddControllers();
-builder.Services.AddSwaggerGen(c =>
+class Startup
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HovyMonitor.Api", Version = "v1" });
-});
+    private readonly IWebHostEnvironment _currentEnvironment;
+    public readonly IConfiguration _configuration;
 
-#region DbConnection
+    public Startup(IConfiguration configuration, IWebHostEnvironment env)
+    {
+        _currentEnvironment = env;
+        _configuration = configuration;
+    }
 
-var dbConnection = configuration.GetConnectionString("DefaultConnection");
-var dbVersion = configuration.GetValue<string>("ConnectionMysqlMariaDbVersion");
-builder.Services.AddDbContext<ApplicationContext>(options =>
-    options.UseMySql(dbConnection,
-        new MariaDbServerVersion(dbVersion)));
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.Configure<Configuration>(_configuration.GetSection("AppConfiguration"));
+        services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
 
-#endregion
+        #region DbConnection
 
-builder.Services.AddScoped<SensorDetectionsRepository>();
+        var dbConnection = _configuration.GetConnectionString("DefaultConnection");
+        var dbVersion = _configuration.GetValue<string>("ConnectionMysqlMariaDbVersion");
+        services.AddDbContext<ApplicationContext>(options =>
+            options.UseMySql(dbConnection,
+                new MariaDbServerVersion(dbVersion)));
 
-builder.Services.AddSingleton<SerialMonitor>();
+        #endregion
 
-builder.Services.AddSingleton<SensorDetectionsService>();
+        services.AddScoped<SensorDetectionsRepository>();
+        services.AddSingleton<SerialMonitor>();
+        services.AddSingleton<SensorDetectionsService>();
+        services.AddHostedService<SerialMonitorWorker>();
 
-builder.Services.AddHostedService<SerialMonitorWorker>();
+        services.AddControllers();
+        services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "HovyMonitor.Api", Version = "v1" });
+        });
+    }
 
-builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
-                    loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration));
+    public void Configure(IApplicationBuilder app)
+    {
+        if (_currentEnvironment.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HovyMonitor.Api v1"));
+        }
 
-builder.Host.UseWindowsService();
+        app.UseRouting();
 
-var app = builder.Build();
+        app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HovyMonitor.Api v1"));
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    }
 }
-
-app.UseRouting();
-
-app.UseAuthorization();
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-});
-
-app.Run();

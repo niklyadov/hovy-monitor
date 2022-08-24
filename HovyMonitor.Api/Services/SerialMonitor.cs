@@ -224,8 +224,8 @@ public class SerialMonitor
         var response = serialPort.ReadExisting();
         var isSuccessPing = response.Equals(pong, StringComparison.OrdinalIgnoreCase);
 
-        _logger.LogInformation("Ping-pong is {Status}, response equals `{Response}`, expected `{ExpectedResponse}`", 
-            isSuccessPing ? "successful" : "failed", response, pong);
+        _logger.LogInformation("Ping-pong for serial Port: {PortName} is {Status}, response equals `{Response}`, expected `{ExpectedResponse}`",
+           serialPort.PortName, isSuccessPing ? "successful" : "failed", response, pong);
 
         return isSuccessPing;
     }
