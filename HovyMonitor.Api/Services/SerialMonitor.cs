@@ -156,6 +156,9 @@ public class SerialMonitor
             var serialPort = new SerialPort(portName, _configuration.BaundRate);
             serialPort.DataBits = _configuration.DataBits;
 
+            _logger.LogDebug("Created new serial port connection. Portname: {PortName}; BaundRate: {BaundRate}; DataBits: {DataBits}", 
+                serialPort.PortName, serialPort.BaudRate, serialPort.DataBits);
+
             serialPort.PinChanged += (sender, args) =>
             {
                 _logger.LogDebug("Wow, pin changed");
@@ -218,7 +221,13 @@ public class SerialMonitor
 
         await Task.Delay(_configuration.SendInterval, _cancellationToken);
 
-        return serialPort.ReadExisting().Equals(pong, StringComparison.OrdinalIgnoreCase);
+        var response = serialPort.ReadExisting();
+        var isSuccessPing = response.Equals(pong, StringComparison.OrdinalIgnoreCase);
+
+        _logger.LogInformation("Ping-pong is {Status}, response equals `{Response}`, expected `{ExpectedResponse}`", 
+            isSuccessPing ? "successful" : "failed", response, pong);
+
+        return isSuccessPing;
     }
 
     private void SendCommand(SerialPort port, string commandName)
@@ -246,7 +255,10 @@ public class SerialMonitor
         if (!port.IsOpen)
         {
             throw new Exception("Serial port is closed");
-        } 
+        }
+
+        _logger.LogInformation("Send command {CommandName} to port {PortName}", commandName, port.PortName);
+
         port.Write(chars.ToArray(), 0, chars.Count);
     }
     #endregion
