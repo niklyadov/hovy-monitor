@@ -14,7 +14,7 @@ MHZ19_uart mhz19;
 UBCSerial ubc;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // bug with this
   //pinMode(RSTPIN, OUTPUT);
