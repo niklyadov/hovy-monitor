@@ -11,7 +11,7 @@ dotnet publish -c Release --no-self-contained --output %servicePath% %fullServic
 sc.exe delete %serviceName%
 sc.exe create %serviceName% binPath="%servicePath%\%fullServiceName%.exe"
 
-copy /y "%hostedPath%\hovy-monitor-api-config.json" "%servicePath%\appsettings.json"
+copy /y "%hostedPath%\%serviceName%-config.json" "%servicePath%\appsettings.json"
 
 net start %serviceName%
 pause
