@@ -48,7 +48,7 @@ public class SerialMonitor
     {
         while(!_cancellationToken.IsCancellationRequested)
         {
-            if (!_lastCommandExecutionTime.HasValue)
+            if (_commandHandleTask == null)
             {
                 _logger.LogDebug("Commands listener is not started");
                 await StartHandleCommands();
@@ -72,12 +72,14 @@ public class SerialMonitor
 
     private async Task StartHandleCommands()
     {
-        if(_port == null || !_port.IsOpen)
+        
+        if (_port == null || !_port.IsOpen)
         {
             _port = await GetArduinoPort();
         }
 
         _logger.LogDebug("Starting a Commands listener");
+
         _commandHandleTaskCts = new CancellationTokenSource();
         _commandHandleTask = Task.Run(HandleCommands, _commandHandleTaskCts.Token);
     }
@@ -108,7 +110,7 @@ public class SerialMonitor
             SendCommand(_port, command.CommandName);
             _logger.LogDebug("Success send command {CommandName} to board", command.CommandName);
                     
-            command.CommandResponse = await WaitCommandResponse(_cancellationToken);
+            command.CommandResponse = WaitCommandResponse(command.CommandName);
                     
             _logger.LogDebug("Success receive a data for command {CommandName}", command.CommandName);
                     
@@ -116,16 +118,16 @@ public class SerialMonitor
         }
     }
 
-    private async Task<string> WaitCommandResponse(CancellationToken cancellationToken, int countRetries = 2, int currentRetry = 1)
+    private string WaitCommandResponse(string commandName, int countRetries = 2, int currentRetry = 1)
     {
-        _logger.LogDebug("Wait command response, retry: ({Retry}/{TotalRetries})",currentRetry, countRetries);
+        _logger.LogDebug("Wait command {CommandName} response, retry: ({Retry}/{TotalRetries})", commandName, currentRetry, countRetries);
 
         if (currentRetry >= countRetries)
         {
             return string.Empty;
         }
 
-        await Task.Delay(_configuration.ReadTimeout / countRetries, cancellationToken);
+        Thread.Sleep(_configuration.ReadTimeout / countRetries);
 
         if (_port == null)
         {
@@ -147,16 +149,16 @@ public class SerialMonitor
         {
             resposeReadingCount++;
             responseString += _port.ReadExisting();
-            await Task.Delay(250);
-
-            _logger.LogDebug("Waiting the ending symbol. Retry: {Retry} of {MaxReries}", resposeReadingCount, maxResposeReadingCount);
+            Thread.Sleep(250);
+            
+            _logger.LogDebug("Waiting the ending symbol of command {CommandName}. Retry: {Retry} of {MaxReries}", commandName, resposeReadingCount, maxResposeReadingCount);
         }
 
         // если ждем уже очень долго (сделали более maxResposeReadingCount попыток), возьмем первое попавшееся значение
         if (resposeReadingCount >= maxResposeReadingCount && responseString.Contains("\r\n"))
         {
             responseString = responseString.Split("\r\n").First();
-            _logger.LogDebug("Waiting is too long... Getting first response string {ResponseString}", responseString);
+            _logger.LogDebug("Waiting for {CommandName} is too long... Getting first response string {ResponseString}", commandName, responseString);
         }
 
         if (!string.IsNullOrEmpty(responseString))
@@ -164,7 +166,7 @@ public class SerialMonitor
             return responseString;
         }
 
-        return await WaitCommandResponse(cancellationToken, countRetries, currentRetry + 1);
+        return WaitCommandResponse(commandName, countRetries, currentRetry + 1);
     }
 
     private async Task<SerialPort> GetArduinoPort()
