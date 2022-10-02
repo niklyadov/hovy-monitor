@@ -138,7 +138,7 @@ namespace HovyMonitor.Api.Services
 
         private List<SensorDetection> GetDetections(string sensorName)
         {
-            if (string.IsNullOrEmpty(sensorName) || _sensorDetections is null)
+            if (string.IsNullOrEmpty(sensorName) || _sensorDetections is null || _sensorDetections.Any())
                 return _sensorDetections ?? new List<SensorDetection>();
 
             return _sensorDetections

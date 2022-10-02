@@ -119,7 +119,7 @@ public class SerialMonitor
     private async Task<string> WaitCommandResponse(CancellationToken cancellationToken, int countRetries = 2, int currentRetry = 1)
     {
         _logger.LogDebug("Wait command response, retry: ({Retry}/{TotalRetries})",currentRetry, countRetries);
-        
+
         if (currentRetry >= countRetries)
         {
             return string.Empty;
@@ -135,11 +135,31 @@ public class SerialMonitor
         if (!_port.IsOpen)
         {
             throw new Exception("Serial port is closed");
-        } 
+        }
 
-        var responseString = _port.ReadExisting();
+        const char endingSymbol = '\n';
+        string responseString = "";
+        int resposeReadingCount = 0;
+        const int maxResposeReadingCount = 10;
 
-        if(!string.IsNullOrEmpty(responseString))
+        // ожидаем конечный символ, но не более 10 раз
+        while (!responseString.EndsWith(endingSymbol) && resposeReadingCount <= maxResposeReadingCount)
+        {
+            resposeReadingCount++;
+            responseString += _port.ReadExisting();
+            await Task.Delay(250);
+
+            _logger.LogDebug("Waiting the ending symbol. Retry: {Retry} of {MaxReries}", resposeReadingCount, maxResposeReadingCount);
+        }
+
+        // если ждем уже очень долго (сделали более maxResposeReadingCount попыток), возьмем первое попавшееся значение
+        if (resposeReadingCount >= maxResposeReadingCount && responseString.Contains("\r\n"))
+        {
+            responseString = responseString.Split("\r\n").First();
+            _logger.LogDebug("Waiting is too long... Getting first response string {ResponseString}", responseString);
+        }
+
+        if (!string.IsNullOrEmpty(responseString))
         {
             return responseString;
         }
