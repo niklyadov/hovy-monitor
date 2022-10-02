@@ -1,15 +1,14 @@
-#include "DHT.h"
+#include "Arduino.h"
+#include "Bme280.h"
 #include "MHZ19_uart.h"
 #include "UBCLib.h"
 #define LEDPIN 13   // Indicator led pin
-#define DHTPIN 2    // DHT sensor pin
-#define DHTTYPE DHT11
 #define MHZRXPIN 4  // mh-z19
 #define MHZTXPIN 3  // mh-z19
 #define MHZPWMPIN 5 // mh-z19
 #define RSTPIN 12
 
-DHT dht(DHTPIN, DHTTYPE);
+Bme280TwoWire bme;
 MHZ19_uart mhz19;
 UBCSerial ubc;
 
@@ -23,9 +22,13 @@ void setup() {
   pinMode(LEDPIN, OUTPUT);
   digitalWrite(LEDPIN, HIGH);
 
-  // dht init
-  dht.begin();
+  Wire.begin(76);
 
+  Serial.println();
+
+  bme.begin(Bme280TwoWireAddress::Primary);
+  bme.setSettings(Bme280Settings::indoor());
+  
   // mhz19 init
   int status;
   mhz19.setAutoCalibration(true);
@@ -59,18 +62,14 @@ void receive(Message message) {
 void getDht11Data() {
   digitalWrite(LEDPIN, HIGH);
   
-  float t = dht.readTemperature();
-  float h = dht.readHumidity();
+  float t = bme.getTemperature();
+  float h = bme.getHumidity();
 
   digitalWrite(LEDPIN, LOW);
   
   if(!isnan(t) && !isnan(t)) {
-   Serial.print("dht11:t=");
-   Serial.print(t);
-    
-   Serial.print(";h=");
-   Serial.print(h);
-   Serial.println(";");
+    String str = "dht11:t=" + String(t, 1) + ";h=" + String(h, 0) + ";";
+    Serial.println(str);
   }
   else {
    Serial.print("dht11:t=0;h=0;");
