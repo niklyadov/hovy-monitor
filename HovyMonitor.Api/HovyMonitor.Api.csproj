@@ -17,10 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HovyMonitor\HovyMonitor.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
@@ -31,9 +27,4 @@
       <DependentUpon>Host.bat</DependentUpon>
     </Compile>
   </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="log20220809.txt" />
-  </ItemGroup>
-
 </Project>
