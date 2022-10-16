@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Ports;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.IO.Ports;
 using HovyMonitor.Api.Entity;
 using HovyMonitor.Api.Workers;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace HovyMonitor.Api.Services;
@@ -17,11 +11,11 @@ public class SerialMonitor
     private readonly SerialPortConfiguration _configuration;
     private readonly ILogger<SerialMonitor> _logger;
     private DateTime? _lastCommandExecutionTime = null;
-    private Task _commandHandleTask = null;
+    private Task? _commandHandleTask = null;
 
-    private SerialPortInputOutput _port;
+    private SerialPortInputOutput? _port;
     private CancellationToken _cancellationToken;
-    private CancellationTokenSource _commandHandleTaskCts;
+    private CancellationTokenSource? _commandHandleTaskCts;
     
     public SerialMonitor(IOptions<Configuration> configuration, ILogger<SerialMonitor> logger)
     {
@@ -48,7 +42,7 @@ public class SerialMonitor
     {
         while(!_cancellationToken.IsCancellationRequested)
         {
-            if (_commandHandleTask == null)
+            if (_commandHandleTask == null || _lastCommandExecutionTime == null)
             {
                 _logger.LogDebug("Commands listener is not started");
                 await StartHandleCommands();
@@ -85,10 +79,10 @@ public class SerialMonitor
     
     private async Task RestartHandleCommands()
     {
-        _port.CloseConnection();
+        _port?.CloseConnection();
 
-        _commandHandleTaskCts.Cancel();
-        _commandHandleTask.Dispose();
+        _commandHandleTaskCts?.Cancel();
+        _commandHandleTask?.Dispose();
         _lastCommandExecutionTime = null;
 
         await StartHandleCommands();
@@ -105,7 +99,7 @@ public class SerialMonitor
             var command = _commands.Dequeue();
             _logger.LogDebug("Working with a command {CommandName}", command.CommandName);
                     
-            _port.SendUbcCommand(command.CommandName);
+            _port?.SendUbcCommand(command.CommandName);
             _logger.LogDebug("Success send command {CommandName} to board", command.CommandName);
                     
             command.CommandResponse = WaitCommandResponse(command.CommandName);
@@ -231,9 +225,9 @@ public class SerialMonitor
         await Task.Delay(_configuration.SendInterval, _cancellationToken);
 
         const int maxCheckRetries = 10;
-        for (int i = 0; i < 10; i++)
+        for (int i = 1; i <= 10; i++)
         {
-            _logger.LogInformation("[ping] {N}/{TotalN}", i, maxCheckRetries);
+            _logger.LogInformation("[ping] {N} of {TotalN}", i, maxCheckRetries);
             
             if (serialPort.PeekBuffer().Trim() != string.Empty)
             {
