@@ -174,7 +174,7 @@ public class SerialMonitor
         foreach (var portName in serialPortNames)
         {
             var serialPortConfiguration =
-                new SerialPortInputOutputConfig(portName, _configuration.BaundRate, _configuration.DataBits);
+                new SerialPortInputOutputConfig(portName, _configuration.BandRate, _configuration.DataBits);
 
             var serialPort = new SerialPortInputOutput(serialPortConfiguration);
 
