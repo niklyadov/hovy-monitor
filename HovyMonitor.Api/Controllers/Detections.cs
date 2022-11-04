@@ -23,7 +23,7 @@ namespace HovyMonitor.Api.Controllers
 
         [HttpGet]
         [Route("last")]
-        public IActionResult GetLastSensorDetections([FromQuery] string sensorName)
+        public IActionResult GetLastSensorDetections([FromQuery] string? sensorName)
         {
 
             if (!_sensorDetections.TryGetLastDetections(sensorName, out List<SensorDetection> result))
