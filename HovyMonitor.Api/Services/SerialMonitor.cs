@@ -131,13 +131,13 @@ public class SerialMonitor
             throw new Exception("Serial port is closed");
         }
 
-        const char endingSymbol = '\n';
+        const string endingSymbols = ";\r\n";
         string responseString = "";
         int responseReadingCount = 0;
         const int maxResponseReadingCount = 10;
 
         // ожидаем конечный символ, но не более 10 раз
-        while (!responseString.EndsWith(endingSymbol) && responseReadingCount <= maxResponseReadingCount)
+        while (!responseString.EndsWith(endingSymbols) && responseReadingCount <= maxResponseReadingCount)
         {
             responseReadingCount++;
             responseString += _port.PopBuffer();
