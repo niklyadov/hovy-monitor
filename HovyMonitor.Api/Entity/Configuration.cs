@@ -6,12 +6,10 @@ namespace HovyMonitor.Api.Entity
     public class Configuration
     {
         public SerialPortConfiguration SerialPort { get; set; } 
-            = new SerialPortConfiguration();
+            = new ();
 
-        internal static IConfiguration GetSection(string v)
-        {
-            throw new NotImplementedException();
-        }
+        public List<String> CommandsForSurveysOfSensors { get; set; } 
+            = new();
     }
 
     public class SerialPortConfiguration

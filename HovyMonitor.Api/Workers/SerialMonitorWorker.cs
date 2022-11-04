@@ -1,9 +1,6 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using HovyMonitor.Api.Entity;
 using HovyMonitor.Api.Services;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace HovyMonitor.Api.Workers
 {
@@ -12,13 +9,15 @@ namespace HovyMonitor.Api.Workers
         private readonly ILogger<SerialMonitorWorker> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly SerialMonitor _serialMonitor;
+        private readonly Configuration _configuration;
 
         public SerialMonitorWorker(ILogger<SerialMonitorWorker> logger,
-            IServiceScopeFactory serviceScopeFactory, SerialMonitor serialMonitor)
+            IServiceScopeFactory serviceScopeFactory, SerialMonitor serialMonitor, IOptions<Configuration> cfgOptions)
         {
             _logger = logger;
             _serviceScopeFactory = serviceScopeFactory;
             _serialMonitor = serialMonitor;
+            _configuration = cfgOptions.Value;
         }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -27,21 +26,26 @@ namespace HovyMonitor.Api.Workers
            
             using var scope = _serviceScopeFactory.CreateScope();
             var sensorDetections = scope.ServiceProvider.GetRequiredService<SensorDetectionsService>();
+
+            var commands = _configuration.CommandsForSurveysOfSensors;
+            
+            if(!commands.Any()) 
+                _logger.LogWarning("No commands specified for survey");
+            else
+            {
+                _logger.LogInformation("{CommandsCount} commands specified, is a: {CommandNames}", commands.Count, String.Join(';', commands));
+            }
             
             while (!stoppingToken.IsCancellationRequested)
             {
-                var commandDht11 = new CommandAwaiter("dht11_dt");
-                commandDht11.CommandResponseReceived += async response =>
-                    await sensorDetections.WriteDetectionsAsync(response);
+                foreach (String commandName in commands)
+                {
+                    var commandTask = new CommandAwaiter(commandName);
+                    commandTask.CommandResponseReceived += async response =>
+                        await sensorDetections.WriteDetectionsAsync(response);
+                    _serialMonitor.Send(commandTask);
+                }
                 
-                _serialMonitor.Send(commandDht11);
-                
-                var commandMhz19 = new CommandAwaiter("mhz19_dt");
-                commandMhz19.CommandResponseReceived += async response =>
-                    await sensorDetections.WriteDetectionsAsync(response);
-                
-                _serialMonitor.Send(commandMhz19);
-
                 await Task.Delay(5000, stoppingToken);
             }
         }
