@@ -44,6 +44,7 @@ namespace HovyMonitor.Api.Workers
                     commandTask.CommandResponseReceived += async response =>
                         await sensorDetections.WriteDetectionsAsync(response);
                     _serialMonitor.Send(commandTask);
+                    await Task.Delay(500, stoppingToken);
                 }
                 
                 await Task.Delay(5000, stoppingToken);
