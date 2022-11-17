@@ -18,6 +18,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: hovymonitor-api
+    restart: always
     ports:
       - 6600:6600
     depends_on:
