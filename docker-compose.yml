@@ -12,7 +12,7 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - db:/var/lib/mysql
+        - ./DockerData/mysql-data:/var/lib/mysql
   hovymonitor-api:
     build:
       context: .
