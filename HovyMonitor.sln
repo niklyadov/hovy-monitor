@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HovyMonitor.TlgBot", "HovyMonitor.TlgBot\HovyMonitor.TlgBot.csproj", "{DD5995BC-2E15-462F-A763-7F3930BF78B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{CC2DDCB3-CEE3-4412-ACEC-22F3564030A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC2DDCB3-CEE3-4412-ACEC-22F3564030A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC2DDCB3-CEE3-4412-ACEC-22F3564030A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD5995BC-2E15-462F-A763-7F3930BF78B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD5995BC-2E15-462F-A763-7F3930BF78B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD5995BC-2E15-462F-A763-7F3930BF78B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD5995BC-2E15-462F-A763-7F3930BF78B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
