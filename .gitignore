@@ -401,3 +401,5 @@ DockerData/mysql-data
 
 .idea
 HovyMonitor.TlgBot/appsettings.Development.json
+
+binaries

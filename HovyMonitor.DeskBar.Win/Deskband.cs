@@ -46,6 +46,9 @@ namespace HovyMonitor.DeskBar.Win
 
             cm.MenuItems.Add("-");
 
+            cm.MenuItems.Add("Install last update (*New)", (object sender, EventArgs e) =>
+                RunBat(Path.Combine(Program.CurrentDir, "HovyMonitor.Deskbar.Win.Updater.exe"), Environment.CurrentDirectory));
+
             cm.MenuItems.Add("Re-install", (object sender, EventArgs e) => 
                 RunBat(Path.Combine(Program.CurrentDir, "install_script.bat"), Environment.CurrentDirectory));
 
@@ -55,9 +58,9 @@ namespace HovyMonitor.DeskBar.Win
             cm.MenuItems.Add("-");
 
             cm.MenuItems.Add("About", (object sender, EventArgs e) =>
-                MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.4" +
+                MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.2.0" +
                     "\n\n" +
-                    "31.03.2022"));
+                    "08.01.2023"));
 
             ContextMenu = cm;
 

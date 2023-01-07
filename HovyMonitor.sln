@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HovyMonitor.DeskBar.Win", "HovyMonitor.DeskBar.Win\HovyMonitor.DeskBar.Win.csproj", "{808BD6C8-498F-4CF8-B8F5-E73879901E46}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9115799A-EA40-4579-AE78-1CB9A9D76263} = {9115799A-EA40-4579-AE78-1CB9A9D76263}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HovyMonitor.Api", "HovyMonitor.Api\HovyMonitor.Api.csproj", "{96B6D376-C7B0-4684-8080-94019519AD68}"
 EndProject
@@ -14,7 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HovyMonitor.TlgBot", "HovyMonitor.TlgBot\HovyMonitor.TlgBot.csproj", "{DD5995BC-2E15-462F-A763-7F3930BF78B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HovyMonitor.TlgBot", "HovyMonitor.TlgBot\HovyMonitor.TlgBot.csproj", "{DD5995BC-2E15-462F-A763-7F3930BF78B9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HovyMonitor.Deskbar.Win.Updater", "HovyMonitor.Deskbar.Win.Updater\HovyMonitor.Deskbar.Win.Updater.csproj", "{9115799A-EA40-4579-AE78-1CB9A9D76263}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +43,10 @@ Global
 		{DD5995BC-2E15-462F-A763-7F3930BF78B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD5995BC-2E15-462F-A763-7F3930BF78B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DD5995BC-2E15-462F-A763-7F3930BF78B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9115799A-EA40-4579-AE78-1CB9A9D76263}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9115799A-EA40-4579-AE78-1CB9A9D76263}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9115799A-EA40-4579-AE78-1CB9A9D76263}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9115799A-EA40-4579-AE78-1CB9A9D76263}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

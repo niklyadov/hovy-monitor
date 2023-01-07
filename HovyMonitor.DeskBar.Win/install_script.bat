@@ -18,12 +18,12 @@ IF "%CD%" == "C:\Program Files\HovyMonitorBar" (
 ) else (
     echo You should unpack files right into C:\Program Files\HovyMonitorBar directory.
     echo "Hit any key to move all files automatically or exit and do it manually"
-    pause
+rem     pause
     mkdir "C:\Program Files\HovyMonitorBar"
     MOVE "%CD%\*" "C:\Program Files\HovyMonitorBar"
     call "C:\Program Files\HovyMonitorBar\install_script.bat"
     exit /b 0
-    pause
+rem     pause
 )
 
 taskkill /im explorer.exe /f
