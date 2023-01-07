@@ -1,8 +1,6 @@
 ﻿using System;
-using CSDeskBand;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using CSDeskBand.Win;
 using System.Diagnostics;
 using System.Linq;
 using System.Drawing;
@@ -10,6 +8,8 @@ using System.Globalization;
 using System.IO;
 using HovyMonitor.Entity;
 using System.Collections.Generic;
+using CSDeskBand.Win;
+using CSDeskBand;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -22,6 +22,8 @@ namespace HovyMonitor.DeskBar.Win
         private Label SecondLabel;
         private Timer Timer;
         private Form FormGui;
+        private int LastFirstLabelDetectionsIndex = -1;
+        private int LastSecondLabelDetectionsIndex = -1;
 
         public Deskband()
         {
@@ -109,14 +111,31 @@ namespace HovyMonitor.DeskBar.Win
 
         private void Timer_Tick(object sender, EventArgs e)
         {
+            var firstLabelOptions = Program.Configuration.UI.FirstLabel;
+            var secondLabelOptions = Program.Configuration.UI.SecondLabel;
+
+            var indexOfFirstLabelToRender = LastFirstLabelDetectionsIndex + 1;
+
+            if (indexOfFirstLabelToRender >= firstLabelOptions.Detections.Count)
+                indexOfFirstLabelToRender = 0;
+
+            LastFirstLabelDetectionsIndex = indexOfFirstLabelToRender;
+
+            var indexOfSecondLabelToRender = LastSecondLabelDetectionsIndex + 1;
+
+            if (indexOfSecondLabelToRender >= secondLabelOptions.Detections.Count)
+                indexOfSecondLabelToRender = 0;
+
+            LastSecondLabelDetectionsIndex = indexOfSecondLabelToRender;
+
             Program.DetectionsService.GetLastSensorDetections((detections) =>
             {
-                ApplyLabel(FirstLabel, Program.Configuration.UI.FirstLabel, detections);
-                ApplyLabel(SecondLabel, Program.Configuration.UI.SecondLabel, detections);
+                ApplyLabel(FirstLabel, firstLabelOptions.Detections[indexOfFirstLabelToRender], detections);
+                ApplyLabel(SecondLabel, secondLabelOptions.Detections[indexOfSecondLabelToRender], detections);
             });
         }
 
-        private void ApplyLabel(Label label, LabelConfiguration labelConfiguration, List<SensorDetection> detections)
+        private void ApplyLabel(Label label, LabelDetectionConfigurations labelConfiguration, List<SensorDetection> detections)
         {
             label.Invoke((MethodInvoker)delegate
             {

@@ -69,7 +69,7 @@ namespace HovyMonitor.DeskBar.Win
                     using (var wc = new System.Net.WebClient())
                     {
                         var url = (_configuration.BaseUri + _configuration.ListOfSensorDetectionsUrl)
-                            .Replace("{{date}}", selectDatetime.ToShortDateString());
+                            .Replace("{{date}}", selectDatetime.ToString(_configuration.DateTimeFormat));
 
                         contents = wc.DownloadString(url);
                     }
@@ -79,7 +79,6 @@ namespace HovyMonitor.DeskBar.Win
                 catch
                 {
                 }
-
             });
         }
     }
