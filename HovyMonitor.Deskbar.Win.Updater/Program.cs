@@ -61,19 +61,15 @@ Directory.CreateDirectory(binariesDir);
 ZipFile.ExtractToDirectory(finalFilePath, binariesDir);
 
 var unInstallRunner = new CliRunner(Path.Combine(binariesDir, "uninstall_script.bat"), binariesDir);
-
 unInstallRunner.MessageReceived += (string message) =>
 {
     Console.WriteLine($"Runner -> \t{message}");
 };
-
 unInstallRunner.Run("", CancellationToken.None);
 
 var installRunner = new CliRunner(Path.Combine(binariesDir, "install_script.bat"), binariesDir);
-
 installRunner.MessageReceived += (string message) =>
 {
     Console.WriteLine($"Runner -> \t{message}");
 };
-
 installRunner.Run("", CancellationToken.None);
