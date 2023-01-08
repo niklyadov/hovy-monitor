@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <BaseOutputPath>D:\10_PROJECTS\hovy-monitor\binaries</BaseOutputPath>
+    <OutputPath>..\binaries\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

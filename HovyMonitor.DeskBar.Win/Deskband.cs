@@ -10,6 +10,9 @@ using HovyMonitor.Entity;
 using System.Collections.Generic;
 using CSDeskBand.Win;
 using CSDeskBand;
+using System.Reflection;
+using System.Threading.Tasks;
+using System.Diagnostics.Eventing.Reader;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -20,7 +23,10 @@ namespace HovyMonitor.DeskBar.Win
     {
         private Label FirstLabel;
         private Label SecondLabel;
-        private Timer Timer;
+        private Color FirstLabelTargetColor;
+        private Color SecondLabelTargetColor;
+        private Timer FetchNewDataTimer;
+
         private Form FormGui;
         private int LastFirstLabelDetectionsIndex = -1;
         private int LastSecondLabelDetectionsIndex = -1;
@@ -42,32 +48,32 @@ namespace HovyMonitor.DeskBar.Win
             });
 
             cm.MenuItems.Add("Configure options", (object sender, EventArgs e) => 
-                ExploreFile(Path.Combine(Program.CurrentDir, "appsettings.json")));
+                ExploreFile(Program.AppsettingsLocation));
 
             cm.MenuItems.Add("-");
 
             cm.MenuItems.Add("Install last update (*New)", (object sender, EventArgs e) =>
-                RunBat(Path.Combine(Program.CurrentDir, "HovyMonitor.Deskbar.Win.Updater.exe"), Environment.CurrentDirectory));
+                RunBat(Program.UpdaterLocation, Environment.CurrentDirectory));
 
             cm.MenuItems.Add("Re-install", (object sender, EventArgs e) => 
-                RunBat(Path.Combine(Program.CurrentDir, "install_script.bat"), Environment.CurrentDirectory));
+                RunBat(Program.ReinstallScriptLocation, Environment.CurrentDirectory));
 
             cm.MenuItems.Add("Uninstall", (object sender, EventArgs e) =>
-                RunBat(Path.Combine(Program.CurrentDir, "uninstall_script.bat"), Environment.CurrentDirectory));
+                RunBat(Program.UninstallScriptLocation, Environment.CurrentDirectory));
 
             cm.MenuItems.Add("-");
 
             cm.MenuItems.Add("About", (object sender, EventArgs e) =>
-                MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.2.0" +
+                MessageBox.Show($"HovyMonitor(.DeskBar.Win) - {Assembly.GetExecutingAssembly().GetName().Version}" +
                     "\n\n" +
-                    "08.01.2023"));
+                    File.ReadAllText(Program.ChangelogLocation)));
 
             ContextMenu = cm;
 
-            Timer = new Timer();
-            Timer.Tick += new EventHandler(Timer_Tick);
-            Timer.Interval = Program.Configuration.DetectionService.RefreshTimeout;
-            Timer.Start();
+            FetchNewDataTimer = new Timer();
+            FetchNewDataTimer.Tick += new EventHandler(Timer_Tick);
+            FetchNewDataTimer.Interval = Program.Configuration.DetectionService.RefreshTimeout;
+            FetchNewDataTimer.Start();
         }
 
         private void InitializeComponent()
@@ -78,6 +84,7 @@ namespace HovyMonitor.DeskBar.Win
             // 
             // FirstLabel
             // 
+            this.FirstLabel.BackColor = System.Drawing.Color.Transparent;
             this.FirstLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FirstLabel.ForeColor = System.Drawing.SystemColors.Control;
             this.FirstLabel.Location = new System.Drawing.Point(0, 0);
@@ -156,7 +163,7 @@ namespace HovyMonitor.DeskBar.Win
                         var colorConfig = labelConfiguration.Colors
                             .FirstOrDefault(x => x.SensorName == detection.SensorName &&
                                         x.SensorDetection == detection.Name &&
-                                        detection.Value >= x.Values[0] && detection.Value <= x.Values[1]);
+                                        Math.Floor(detection.Value) >= x.Values[0] && Math.Floor(detection.Value) <= x.Values[1]);
 
                         if (colorConfig != null)
                         {
@@ -168,15 +175,13 @@ namespace HovyMonitor.DeskBar.Win
                     }
                 }
 
-                if(labelText != labelFormat)
-                {
-                    label.Text = labelText;
-                } else
-                {
-                    label.Text = " . . . ";
-                }
+                label.Text = (labelText != labelFormat) ? labelText : " . . . ";
 
-                label.ForeColor = labelColor;
+                if (label == FirstLabel)
+                    FirstLabelTargetColor = labelColor;
+                
+                if(label == SecondLabel)
+                    SecondLabelTargetColor = labelColor;
             });
         }
 
@@ -208,6 +213,32 @@ namespace HovyMonitor.DeskBar.Win
             {
                 MessageBox.Show(ex.Message.ToString());
             }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            FirstLabel.ForeColor = MoveColorToColor(FirstLabel.ForeColor, FirstLabelTargetColor);
+            SecondLabel.ForeColor = MoveColorToColor(SecondLabel.ForeColor, SecondLabelTargetColor);
+        }
+
+        private Color MoveColorToColor(Color colorFrom, Color colorTo)
+        {
+            byte r = colorFrom.R;
+            byte g = colorFrom.G;
+            byte b = colorFrom.B;
+
+            if (r > colorTo.R) r--;
+            else if (r < colorTo.R) r++;
+
+            if (g > colorTo.G) g--;
+            else if (g < colorTo.G) g++;
+
+            if (b > colorTo.B) b--;
+            else if (b < colorTo.B) b++;
+
+            return Color.FromArgb(r, g, b);
         }
     }
 }

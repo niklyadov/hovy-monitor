@@ -60,11 +60,20 @@ Console.WriteLine($"\tUnzipping a file {finalFilePath}");
 Directory.CreateDirectory(binariesDir);
 ZipFile.ExtractToDirectory(finalFilePath, binariesDir);
 
-var runner = new CliRunner(Path.Combine(binariesDir, "install_script.bat"), binariesDir);
+var unInstallRunner = new CliRunner(Path.Combine(binariesDir, "uninstall_script.bat"), binariesDir);
 
-runner.MessageReceived += (string message) =>
+unInstallRunner.MessageReceived += (string message) =>
 {
     Console.WriteLine($"Runner -> \t{message}");
 };
 
-runner.Run("", CancellationToken.None);
+unInstallRunner.Run("", CancellationToken.None);
+
+var installRunner = new CliRunner(Path.Combine(binariesDir, "install_script.bat"), binariesDir);
+
+installRunner.MessageReceived += (string message) =>
+{
+    Console.WriteLine($"Runner -> \t{message}");
+};
+
+installRunner.Run("", CancellationToken.None);
