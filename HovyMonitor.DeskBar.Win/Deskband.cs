@@ -11,8 +11,6 @@ using System.Collections.Generic;
 using CSDeskBand.Win;
 using CSDeskBand;
 using System.Reflection;
-using System.Threading.Tasks;
-using System.Diagnostics.Eventing.Reader;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -28,6 +26,7 @@ namespace HovyMonitor.DeskBar.Win
         private Timer FetchNewDataTimer;
 
         private Form FormGui;
+
         private int LastFirstLabelDetectionsIndex = -1;
         private int LastSecondLabelDetectionsIndex = -1;
 

@@ -30,7 +30,6 @@
         {
             this.plotView1 = new OxyPlot.WindowsForms.PlotView();
             this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
-            this.deskband1 = new HovyMonitor.DeskBar.Win.Deskband();
             this.SuspendLayout();
             // 
             // plotView1
@@ -56,20 +55,11 @@
             this.dateTimePicker1.TabIndex = 1;
             this.dateTimePicker1.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged);
             // 
-            // deskband1
-            // 
-            this.deskband1.BackColor = System.Drawing.Color.Black;
-            this.deskband1.Location = new System.Drawing.Point(241, 1);
-            this.deskband1.Name = "deskband1";
-            this.deskband1.Size = new System.Drawing.Size(75, 40);
-            this.deskband1.TabIndex = 2;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(784, 361);
-            this.Controls.Add(this.deskband1);
             this.Controls.Add(this.dateTimePicker1);
             this.Controls.Add(this.plotView1);
             this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
@@ -88,6 +78,5 @@
 
         private OxyPlot.WindowsForms.PlotView plotView1;
         private System.Windows.Forms.DateTimePicker dateTimePicker1;
-        private Deskband deskband1;
     }
 }
