@@ -55,6 +55,20 @@
             this.dateTimePicker1.TabIndex = 1;
             this.dateTimePicker1.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged);
             // 
+            this.minForSelectedValue.AutoSize = true;
+            this.minForSelectedValue.Location = new System.Drawing.Point(227, 525);
+            this.minForSelectedValue.Name = "minForSelectedValue";
+            this.minForSelectedValue.Size = new System.Drawing.Size(0, 21);
+            this.minForSelectedValue.TabIndex = 6;
+            // 
+            // deskband1
+            // 
+            this.deskband1.BackColor = System.Drawing.Color.Black;
+            this.deskband1.Location = new System.Drawing.Point(107, 320);
+            this.deskband1.Name = "deskband1";
+            this.deskband1.Size = new System.Drawing.Size(120, 40);
+            this.deskband1.TabIndex = 7;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);

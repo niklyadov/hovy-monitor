@@ -10,12 +10,29 @@ namespace HovyMonitor.DeskBar.Win
     {
         private readonly DetectionServiceConfiguration _configuration;
 
+        private SearchOptions _searchOptions = new SearchOptions(DateTime.Now, 1);
+
+
+        public SearchOptions SearchOptions { 
+            get
+            {
+                return _searchOptions;
+            }
+            set
+            {
+                _searchOptions = value;
+            }
+        }
+
+        private List<SensorDetection> _sensorDetectionsCache
+            = new List<SensorDetection>();
+
         public DetectionsService(DetectionServiceConfiguration configuration)
         {
             _configuration = configuration;
         }
 
-        public List<SensorDetection> GetDetectionsForSensor(string sensorName, int count)
+        public List<SensorDetection> GetDetectionsForSensor(string sensorName)
         {
             try
             {
@@ -28,7 +45,11 @@ namespace HovyMonitor.DeskBar.Win
                     contents = wc.DownloadString(url);
                 }
 
-                return JsonConvert.DeserializeObject<List<SensorDetection>>(contents);
+                var detections = JsonConvert.DeserializeObject<List<SensorDetection>>(contents);
+
+                DetectionsAvgTrendStore(detections);
+
+                return detections;
             }
             catch
             {
@@ -36,6 +57,23 @@ namespace HovyMonitor.DeskBar.Win
             }
         }
 
+        private void DetectionsAvgTrendStore(List<SensorDetection> detections)
+        {
+            foreach (var detection in detections)
+            {
+                var cachedWithNameOld = _sensorDetectionsCache
+                    .Where(x => x.FullName == detection.FullName)
+                    .Where(x => DateTime.UtcNow - x.DateTime >
+                        TimeSpan.FromMinutes(_configuration.AvgDetectionTimeInMinutes))
+                    .OrderBy(x => x.DateTime)
+                    .ToList();
+
+                foreach (var item in cachedWithNameOld)
+                    _sensorDetectionsCache.Remove(item);
+
+                _sensorDetectionsCache.Add(detection);
+            }
+        }
 
         public void GetLastSensorDetections(Action<List<SensorDetection>> action)
         {
@@ -46,7 +84,7 @@ namespace HovyMonitor.DeskBar.Win
                 var definedSensors = Program.Configuration.DetectionService.Sensors;
                 foreach (var sensor in definedSensors)
                 {
-                    var response = GetDetectionsForSensor(sensor.Name, sensor.Detections.Count);
+                    var response = GetDetectionsForSensor(sensor.Name);
 
                     if (response != null)
                     {
@@ -82,5 +120,47 @@ namespace HovyMonitor.DeskBar.Win
 
             });
         }
+
+        public AvgTrend GetAvgTrend(string sensorname)
+        {
+            var cachedWithName = _sensorDetectionsCache
+                .Where(x => x.FullName == sensorname)
+                .OrderBy(x => x.DateTime)
+                .ToList();
+
+            if (cachedWithName.Count < 2)
+                return AvgTrend.Netural;
+
+            var avgWithoutLast = cachedWithName
+                .Take(cachedWithName.Count - 1)
+                .Average(x => x.Value);
+
+            var lastValue = cachedWithName.Last().Value;
+
+            if (lastValue == avgWithoutLast) 
+                return AvgTrend.Netural;
+
+            return lastValue > avgWithoutLast 
+                ? AvgTrend.Up : AvgTrend.Down;
+        }
+    }
+
+    class SearchOptions
+    {
+        public DateTime SearchDateTime { get; private set; }
+
+        public uint LastDays { get; private set; }
+
+        public SearchOptions(DateTime searchDateTime, uint lastDays) {
+            SearchDateTime = searchDateTime;
+            LastDays = lastDays;
+        }
+    }
+
+    public enum AvgTrend
+    {
+        Down = 0,
+        Netural,
+        Up
     }
 }

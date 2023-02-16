@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -20,6 +21,7 @@ namespace HovyMonitor.DeskBar.Win
             = new List<SensorConfiguration>();
 
         public int RefreshTimeout { get; set; } = 5000;
+        public int AvgDetectionTimeInMinutes = 60;
     }
 
     public class UIConfiguration

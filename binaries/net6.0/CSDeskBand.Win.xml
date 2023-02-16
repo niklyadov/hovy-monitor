@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CSDeskBand.Win</name>
+    </assembly>
+    <members>
+        <member name="T:CSDeskBand.Win.CSDeskBandWin">
+            <summary>
+            Winforms implementation of <see cref="T:CSDeskBand.ICSDeskBand"/>. The deskband should inherit this class.
+            The deskband should also have these attributes <see cref="T:System.Runtime.InteropServices.ComVisibleAttribute"/>, <see cref="T:System.Runtime.InteropServices.GuidAttribute"/>, <see cref="T:CSDeskBand.CSDeskBandRegistrationAttribute"/>.
+            </summary>
+        </member>
+        <member name="P:CSDeskBand.Win.CSDeskBandWin.Options">
+            <summary>
+            Options for this deskband.
+            </summary>
+            <seealso cref="T:CSDeskBand.CSDeskBandOptions"/>
+        </member>
+        <member name="P:CSDeskBand.Win.CSDeskBandWin.TaskbarInfo">
+            <summary>
+            Get the current taskbar information.
+            </summary>
+            <seealso cref="P:CSDeskBand.Win.CSDeskBandWin.TaskbarInfo"/>
+        </member>
+        <member name="M:CSDeskBand.Win.CSDeskBandWin.#ctor">
+            <summary>
+            Initializes a new instance of <see cref="T:CSDeskBand.Win.CSDeskBandWin"/>.
+            </summary>
+        </member>
+        <member name="M:CSDeskBand.Win.CSDeskBandWin.OnClose">
+            <summary>
+            Method is called when deskband is being closed.
+            </summary>
+        </member>
+        <member name="M:CSDeskBand.Win.CSDeskBandWin.VisibilityChanged(System.Boolean)">
+            <summary>
+            Method is called when deskband visibility has changed.
+            </summary>
+        </member>
+        <member name="M:CSDeskBand.Win.CSDeskBandWin.CloseDeskBand">
+            <summary>
+            Close the deskband.
+            </summary>
+        </member>
+    </members>
+</doc>
