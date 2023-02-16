@@ -83,26 +83,30 @@ namespace HovyMonitor.DeskBar.Win
             // 
             // FirstLabel
             // 
+            this.FirstLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.FirstLabel.BackColor = System.Drawing.Color.Transparent;
-            this.FirstLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.FirstLabel.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FirstLabel.ForeColor = System.Drawing.SystemColors.Control;
             this.FirstLabel.Location = new System.Drawing.Point(0, 0);
             this.FirstLabel.Margin = new System.Windows.Forms.Padding(0);
             this.FirstLabel.Name = "FirstLabel";
-            this.FirstLabel.Size = new System.Drawing.Size(75, 20);
+            this.FirstLabel.Size = new System.Drawing.Size(100, 20);
             this.FirstLabel.TabIndex = 0;
             this.FirstLabel.Text = "? ? ?";
             this.FirstLabel.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             // 
             // SecondLabel
             // 
-            this.SecondLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.SecondLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.SecondLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.SecondLabel.BackColor = System.Drawing.Color.Transparent;
+            this.SecondLabel.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.SecondLabel.ForeColor = System.Drawing.SystemColors.Control;
             this.SecondLabel.Location = new System.Drawing.Point(0, 20);
             this.SecondLabel.Margin = new System.Windows.Forms.Padding(0);
             this.SecondLabel.Name = "SecondLabel";
-            this.SecondLabel.Size = new System.Drawing.Size(75, 20);
+            this.SecondLabel.Size = new System.Drawing.Size(100, 20);
             this.SecondLabel.TabIndex = 1;
             this.SecondLabel.Text = "? ? ?";
             this.SecondLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -113,7 +117,7 @@ namespace HovyMonitor.DeskBar.Win
             this.Controls.Add(this.SecondLabel);
             this.Controls.Add(this.FirstLabel);
             this.Name = "Deskband";
-            this.Size = new System.Drawing.Size(75, 40);
+            this.Size = new System.Drawing.Size(100, 40);
             this.ResumeLayout(false);
 
         }
@@ -154,8 +158,9 @@ namespace HovyMonitor.DeskBar.Win
 
                 foreach (var detection in detections)
                 {
+                    var avgTrend = Program.DetectionsService.GetAvgTrend(detection.FullName);
                     var detectionStamp = "{{" + $"{detection.SensorName},{detection.Name}" + "}}";
-                    labelText = labelText.Replace(detectionStamp, detection.Value.ToString());
+                    labelText = labelText.Replace(detectionStamp, $"{detection.Value} {avgTrend}");
 
                     if (labelConfiguration.CustomColors)
                     {
