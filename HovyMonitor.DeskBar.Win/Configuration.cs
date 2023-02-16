@@ -22,6 +22,7 @@ namespace HovyMonitor.DeskBar.Win
         public string DateTimeFormat { get; set; } = "MM.dd.yyyy";
 
         public int RefreshTimeout { get; set; } = 5000;
+        public int AvgDetectionTimeInMinutes { get; set; } = 60;
     }
 
     public class UIConfiguration

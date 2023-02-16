@@ -140,6 +140,11 @@ namespace HovyMonitor.DeskBar.Win
 
                 maxForSelectedValue.Text = $"Max {max.Value} \t(for {max.FullName}) \tat {max.DateTime.ToLocalTime().ToString("dddd, dd MMMM yyyy HH:mm:ss")}";
                 minForSelectedValue.Text = $"Min {min.Value} \t(for {max.FullName}) \tat {min.DateTime.ToLocalTime().ToString("dddd, dd MMMM yyyy HH:mm:ss")}";
+                
+                plotView1.Invoke((MethodInvoker)delegate
+                {
+                    plotView1.Model = GetPlotModelDetections(_cachedDetections);
+                });
             }
         }
 

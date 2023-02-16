@@ -35,7 +35,6 @@
             this.lastDaysNUD = new System.Windows.Forms.NumericUpDown();
             this.maxForSelectedValue = new System.Windows.Forms.Label();
             this.minForSelectedValue = new System.Windows.Forms.Label();
-            this.deskband1 = new HovyMonitor.DeskBar.Win.Deskband();
             ((System.ComponentModel.ISupportInitialize)(this.lastDaysNUD)).BeginInit();
             this.SuspendLayout();
             // 
@@ -121,34 +120,11 @@
             this.minForSelectedValue.Size = new System.Drawing.Size(0, 21);
             this.minForSelectedValue.TabIndex = 6;
             // 
-            // deskband1
-            // 
-            this.deskband1.BackColor = System.Drawing.Color.Black;
-            this.deskband1.Location = new System.Drawing.Point(138, 133);
-            this.deskband1.Name = "deskband1";
-            this.deskband1.Size = new System.Drawing.Size(100, 40);
-            this.deskband1.TabIndex = 7;
-            // 
-            this.minForSelectedValue.AutoSize = true;
-            this.minForSelectedValue.Location = new System.Drawing.Point(227, 525);
-            this.minForSelectedValue.Name = "minForSelectedValue";
-            this.minForSelectedValue.Size = new System.Drawing.Size(0, 21);
-            this.minForSelectedValue.TabIndex = 6;
-            // 
-            // deskband1
-            // 
-            this.deskband1.BackColor = System.Drawing.Color.Black;
-            this.deskband1.Location = new System.Drawing.Point(107, 320);
-            this.deskband1.Name = "deskband1";
-            this.deskband1.Size = new System.Drawing.Size(120, 40);
-            this.deskband1.TabIndex = 7;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(784, 561);
-            this.Controls.Add(this.deskband1);
             this.Controls.Add(this.minForSelectedValue);
             this.Controls.Add(this.maxForSelectedValue);
             this.Controls.Add(this.lastDaysNUD);
@@ -179,6 +155,5 @@
         private System.Windows.Forms.NumericUpDown lastDaysNUD;
         private System.Windows.Forms.Label maxForSelectedValue;
         private System.Windows.Forms.Label minForSelectedValue;
-        private Deskband deskband1;
     }
 }

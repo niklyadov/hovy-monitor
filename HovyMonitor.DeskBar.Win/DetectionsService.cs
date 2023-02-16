@@ -13,8 +13,6 @@ namespace HovyMonitor.DeskBar.Win
 
         private SearchOptions _searchOptions = new SearchOptions(DateTime.Now, 1);
 
-
-
         public SearchOptions SearchOptions { 
             get
             {
@@ -34,10 +32,10 @@ namespace HovyMonitor.DeskBar.Win
             _configuration = configuration;
         }
 
-        public List<SensorDetection> GetDetectionsForSensor(string sensorName, int count)
+        public List<SensorDetection> GetDetectionsForSensor(string sensorName)
         {
-            //try
-            //{
+            try
+            {
                 string contents;
                 using (var wc = new System.Net.WebClient())
                 {
@@ -53,23 +51,23 @@ namespace HovyMonitor.DeskBar.Win
                 {
                     var cachedWithName = _sensorDetectionsCache
                         .Where(x => x.FullName == detection.FullName)
+                        .Where(x => DateTime.UtcNow - x.DateTime 
+                            > TimeSpan.FromMinutes(_configuration.AvgDetectionTimeInMinutes))
                         .OrderBy(x => x.DateTime)
                         .ToList();
 
-                    if (cachedWithName.Count >= 10)
-                    {
-                        _sensorDetectionsCache.Remove(cachedWithName.First());
-                    }
+                    foreach (var item in cachedWithName)
+                        _sensorDetectionsCache.Remove(item);
 
                     _sensorDetectionsCache.Add(detection);
                 }
 
                 return detections;
-            //}
-            //catch
-            //{
-            //    return null;
-            //}
+            }
+            catch
+            {
+                return null;
+            }
         }
 
 
@@ -82,7 +80,7 @@ namespace HovyMonitor.DeskBar.Win
                 var definedSensors = Program.Configuration.DetectionService.Sensors;
                 foreach (var sensor in definedSensors)
                 {
-                    var response = GetDetectionsForSensor(sensor.Name, sensor.Detections.Count);
+                    var response = GetDetectionsForSensor(sensor.Name);
 
                     if (response != null)
                     {
@@ -123,56 +121,32 @@ namespace HovyMonitor.DeskBar.Win
             });
         }
 
-        public void GetSensorDetectionsList2(Action<ICollection<SensorDetection>> action)
+        public string GetAvgTrend(string sensorname)
         {
-            Task.Run(() =>
+            try
             {
-                try
-                {
-                    var detections = new List<SensorDetection>();
-
-                    for (int i = 0; i < SearchOptions.LastDays; i++)
-                    {
-                        //minus days
-                        var searchDateTime = _searchOptions.SearchDateTime.AddDays(i * -1);
-                        using (var wc = new System.Net.WebClient())
-                        {
-                            var url = (_configuration.BaseUri + _configuration.ListOfSensorDetectionsUrl)
-                                .Replace("{{date}}", searchDateTime.ToString(_configuration.DateTimeFormat));
-
-                            detections.AddRange(JsonConvert.DeserializeObject<List<SensorDetection>>(wc.DownloadString(url)));
-                        }
-                    }
-
-                    detections = detections.OrderBy(x => x.DateTime).ToList();
-
-                    action.Invoke(detections);
-                }
-                catch
-                {
-                }
-            });
-        }
-
-        public int GetAvgTrend(string sensorname)
-        {
-            var cachedWithName = _sensorDetectionsCache
+                var cachedWithName = _sensorDetectionsCache
                 .Where(x => x.FullName == sensorname)
                 .OrderBy(x => x.DateTime)
                 .ToList();
 
-            if (cachedWithName.Count < 2)
-                return 0;
+                if (cachedWithName.Count < 2)
+                    return string.Empty;
 
-            var avgWithoutLast = cachedWithName
-                .Take(cachedWithName.Count - 1)
-                .Average(x => x.Value);
+                var avgWithoutLast = cachedWithName
+                    .Take(cachedWithName.Count - 1)
+                    .Average(x => x.Value);
 
-            var lastValue = cachedWithName.Last().Value;
+                var lastValue = cachedWithName.Last().Value;
 
-            if (lastValue == avgWithoutLast) return 0;
+                if (lastValue == avgWithoutLast)
+                    return string.Empty;
 
-            return lastValue > avgWithoutLast ? 1 : -1;
+                return lastValue > avgWithoutLast ? "▲" : "▼";
+            } catch
+            {
+                return string.Empty;
+            }
         }
     }
 
