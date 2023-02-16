@@ -1,8 +1,6 @@
 ﻿using System;
-using CSDeskBand;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using CSDeskBand.Win;
 using System.Diagnostics;
 using System.Linq;
 using System.Drawing;
@@ -10,6 +8,9 @@ using System.Globalization;
 using System.IO;
 using HovyMonitor.Entity;
 using System.Collections.Generic;
+using CSDeskBand.Win;
+using CSDeskBand;
+using System.Reflection;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -20,8 +21,14 @@ namespace HovyMonitor.DeskBar.Win
     {
         private Label FirstLabel;
         private Label SecondLabel;
-        private Timer Timer;
+        private Color FirstLabelTargetColor;
+        private Color SecondLabelTargetColor;
+        private Timer FetchNewDataTimer;
+
         private Form FormGui;
+
+        private int LastFirstLabelDetectionsIndex = -1;
+        private int LastSecondLabelDetectionsIndex = -1;
 
         public Deskband()
         {
@@ -40,29 +47,32 @@ namespace HovyMonitor.DeskBar.Win
             });
 
             cm.MenuItems.Add("Configure options", (object sender, EventArgs e) => 
-                ExploreFile(Path.Combine(Program.CurrentDir, "appsettings.json")));
+                ExploreFile(Program.AppsettingsLocation));
 
             cm.MenuItems.Add("-");
 
+            cm.MenuItems.Add("Install last update (*New)", (object sender, EventArgs e) =>
+                RunBat(Program.UpdaterLocation, Environment.CurrentDirectory));
+
             cm.MenuItems.Add("Re-install", (object sender, EventArgs e) => 
-                RunBat(Path.Combine(Program.CurrentDir, "install_script.bat"), Environment.CurrentDirectory));
+                RunBat(Program.ReinstallScriptLocation, Environment.CurrentDirectory));
 
             cm.MenuItems.Add("Uninstall", (object sender, EventArgs e) =>
-                RunBat(Path.Combine(Program.CurrentDir, "uninstall_script.bat"), Environment.CurrentDirectory));
+                RunBat(Program.UninstallScriptLocation, Environment.CurrentDirectory));
 
             cm.MenuItems.Add("-");
 
             cm.MenuItems.Add("About", (object sender, EventArgs e) =>
-                MessageBox.Show("HovyMonitor(.DeskBar.Win) - v.0.1.4" +
+                MessageBox.Show($"HovyMonitor(.DeskBar.Win) - {Assembly.GetExecutingAssembly().GetName().Version}" +
                     "\n\n" +
-                    "31.03.2022"));
+                    File.ReadAllText(Program.ChangelogLocation)));
 
             ContextMenu = cm;
 
-            Timer = new Timer();
-            Timer.Tick += new EventHandler(Timer_Tick);
-            Timer.Interval = Program.Configuration.DetectionService.RefreshTimeout;
-            Timer.Start();
+            FetchNewDataTimer = new Timer();
+            FetchNewDataTimer.Tick += new EventHandler(Timer_Tick);
+            FetchNewDataTimer.Interval = Program.Configuration.DetectionService.RefreshTimeout;
+            FetchNewDataTimer.Start();
         }
 
         private void InitializeComponent()
@@ -73,25 +83,30 @@ namespace HovyMonitor.DeskBar.Win
             // 
             // FirstLabel
             // 
-            this.FirstLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.FirstLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.FirstLabel.BackColor = System.Drawing.Color.Transparent;
+            this.FirstLabel.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FirstLabel.ForeColor = System.Drawing.SystemColors.Control;
             this.FirstLabel.Location = new System.Drawing.Point(0, 0);
             this.FirstLabel.Margin = new System.Windows.Forms.Padding(0);
             this.FirstLabel.Name = "FirstLabel";
-            this.FirstLabel.Size = new System.Drawing.Size(120, 20);
+            this.FirstLabel.Size = new System.Drawing.Size(100, 20);
             this.FirstLabel.TabIndex = 0;
             this.FirstLabel.Text = "? ? ?";
             this.FirstLabel.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             // 
             // SecondLabel
             // 
-            this.SecondLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.SecondLabel.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.SecondLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.SecondLabel.BackColor = System.Drawing.Color.Transparent;
+            this.SecondLabel.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.SecondLabel.ForeColor = System.Drawing.SystemColors.Control;
             this.SecondLabel.Location = new System.Drawing.Point(0, 20);
             this.SecondLabel.Margin = new System.Windows.Forms.Padding(0);
             this.SecondLabel.Name = "SecondLabel";
-            this.SecondLabel.Size = new System.Drawing.Size(120, 20);
+            this.SecondLabel.Size = new System.Drawing.Size(100, 20);
             this.SecondLabel.TabIndex = 1;
             this.SecondLabel.Text = "? ? ?";
             this.SecondLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -102,21 +117,38 @@ namespace HovyMonitor.DeskBar.Win
             this.Controls.Add(this.SecondLabel);
             this.Controls.Add(this.FirstLabel);
             this.Name = "Deskband";
-            this.Size = new System.Drawing.Size(120, 40);
+            this.Size = new System.Drawing.Size(100, 40);
             this.ResumeLayout(false);
 
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
+            var firstLabelOptions = Program.Configuration.UI.FirstLabel;
+            var secondLabelOptions = Program.Configuration.UI.SecondLabel;
+
+            var indexOfFirstLabelToRender = LastFirstLabelDetectionsIndex + 1;
+
+            if (indexOfFirstLabelToRender >= firstLabelOptions.Detections.Count)
+                indexOfFirstLabelToRender = 0;
+
+            LastFirstLabelDetectionsIndex = indexOfFirstLabelToRender;
+
+            var indexOfSecondLabelToRender = LastSecondLabelDetectionsIndex + 1;
+
+            if (indexOfSecondLabelToRender >= secondLabelOptions.Detections.Count)
+                indexOfSecondLabelToRender = 0;
+
+            LastSecondLabelDetectionsIndex = indexOfSecondLabelToRender;
+
             Program.DetectionsService.GetLastSensorDetections((detections) =>
             {
-                ApplyLabel(FirstLabel, Program.Configuration.UI.FirstLabel, detections);
-                ApplyLabel(SecondLabel, Program.Configuration.UI.SecondLabel, detections);
+                ApplyLabel(FirstLabel, firstLabelOptions.Detections[indexOfFirstLabelToRender], detections);
+                ApplyLabel(SecondLabel, secondLabelOptions.Detections[indexOfSecondLabelToRender], detections);
             });
         }
 
-        private void ApplyLabel(Label label, LabelConfiguration labelConfiguration, List<SensorDetection> detections)
+        private void ApplyLabel(Label label, LabelDetectionConfigurations labelConfiguration, List<SensorDetection> detections)
         {
             label.Invoke((MethodInvoker)delegate
             {
@@ -126,15 +158,16 @@ namespace HovyMonitor.DeskBar.Win
 
                 foreach (var detection in detections)
                 {
+                    var avgTrend = Program.DetectionsService.GetAvgTrend(detection.FullName);
                     var detectionStamp = "{{" + $"{detection.SensorName},{detection.Name}" + "}}";
-                    labelText = labelText.Replace(detectionStamp, detection.Value.ToString());
+                    labelText = labelText.Replace(detectionStamp, $"{detection.Value} {avgTrend}");
 
                     if (labelConfiguration.CustomColors)
                     {
                         var colorConfig = labelConfiguration.Colors
                             .FirstOrDefault(x => x.SensorName == detection.SensorName &&
                                         x.SensorDetection == detection.Name &&
-                                        detection.Value >= x.Values[0] && detection.Value <= x.Values[1]);
+                                        Math.Floor(detection.Value) >= x.Values[0] && Math.Floor(detection.Value) <= x.Values[1]);
 
                         if (colorConfig != null)
                         {
@@ -146,15 +179,13 @@ namespace HovyMonitor.DeskBar.Win
                     }
                 }
 
-                if(labelText != labelFormat)
-                {
-                    label.Text = labelText;
-                } else
-                {
-                    label.Text = " . . . ";
-                }
+                label.Text = (labelText != labelFormat) ? labelText : " . . . ";
 
-                label.ForeColor = labelColor;
+                if (label == FirstLabel)
+                    FirstLabelTargetColor = labelColor;
+                
+                if(label == SecondLabel)
+                    SecondLabelTargetColor = labelColor;
             });
         }
 
@@ -186,6 +217,32 @@ namespace HovyMonitor.DeskBar.Win
             {
                 MessageBox.Show(ex.Message.ToString());
             }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            FirstLabel.ForeColor = MoveColorToColor(FirstLabel.ForeColor, FirstLabelTargetColor);
+            SecondLabel.ForeColor = MoveColorToColor(SecondLabel.ForeColor, SecondLabelTargetColor);
+        }
+
+        private Color MoveColorToColor(Color colorFrom, Color colorTo)
+        {
+            byte r = colorFrom.R;
+            byte g = colorFrom.G;
+            byte b = colorFrom.B;
+
+            if (r > colorTo.R) r--;
+            else if (r < colorTo.R) r++;
+
+            if (g > colorTo.G) g--;
+            else if (g < colorTo.G) g++;
+
+            if (b > colorTo.B) b--;
+            else if (b < colorTo.B) b++;
+
+            return Color.FromArgb(r, g, b);
         }
     }
 }

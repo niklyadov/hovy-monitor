@@ -89,6 +89,11 @@ namespace HovyMonitor.Api.Services
         {
             // dht11:t=27.00;h=15.00;
 
+            detections = detections.Trim();
+
+            if (detections.Contains('\r') || detections.Contains('\n'))
+                return new ();
+            
             var detectionsList = new List<SensorDetection>();
             var colSymbolPosition = detections.IndexOf(':');
             var sensorName = detections.Substring(0, colSymbolPosition);
@@ -124,7 +129,7 @@ namespace HovyMonitor.Api.Services
             return detectionsList;
         }
 
-        public bool TryGetLastDetections(string sensorName, out List<SensorDetection> result)
+        public bool TryGetLastDetections(string? sensorName, out List<SensorDetection> result)
         {
             var detections = GetDetections(sensorName);
 
@@ -136,10 +141,10 @@ namespace HovyMonitor.Api.Services
             return result.Any();
         }
 
-        private List<SensorDetection> GetDetections(string sensorName)
+        private List<SensorDetection> GetDetections(string? sensorName)
         {
-            if (string.IsNullOrEmpty(sensorName) || _sensorDetections is null)
-                return _sensorDetections ?? new List<SensorDetection>();
+            if (string.IsNullOrEmpty(sensorName))
+                return _sensorDetections.Any() ? _sensorDetections : new List<SensorDetection>();
 
             return _sensorDetections
                 .Where(x => x.SensorName.Equals(sensorName))

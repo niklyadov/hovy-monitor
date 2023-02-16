@@ -10,6 +10,16 @@ namespace HovyMonitor.DeskBar.Win
         public static readonly Configuration Configuration;
         public static readonly DetectionsService DetectionsService;
         public static readonly string CurrentDir = @"C:\Program Files\HovyMonitorBar";
+        public static readonly string AppsettingsLocation =
+            Path.Combine(CurrentDir, "appsettings.json");
+        public static readonly string ChangelogLocation =
+            Path.Combine(CurrentDir, "Changelog.txt");
+        public static readonly string UpdaterLocation = 
+            Path.Combine(CurrentDir, "HovyMonitor.Deskbar.Win.Updater.exe");
+        public static readonly string ReinstallScriptLocation =
+            Path.Combine(CurrentDir, "install_script.bat");
+        public static readonly string UninstallScriptLocation =
+            Path.Combine(CurrentDir, "uninstall_script.bat");
 
         static Program()
         {
@@ -33,7 +43,10 @@ namespace HovyMonitor.DeskBar.Win
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new MainForm());
+
+            #if DEBUG
+                Application.Run(new MainForm());
+            #endif
         }
     }
 }

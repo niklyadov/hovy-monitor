@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using SelectionMode = System.Windows.Forms.SelectionMode;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -17,6 +18,9 @@ namespace HovyMonitor.DeskBar.Win
             InitializeComponent();
         }
 
+        private SensorDetection[] _cachedDetections;
+        private string[] _cachedSensornames;
+
         protected override void OnLoad(EventArgs e)
         {
             var screen = Screen.FromPoint(Location);
@@ -25,66 +29,136 @@ namespace HovyMonitor.DeskBar.Win
             base.OnLoad(e);
         }
 
-
         private void MainForm_Load(object sender, EventArgs e)
         {
-            dateTimePicker1.Value = DateTime.Now;
+            UseWaitCursor = true;
+            UpdateListOfDetections(DateTime.Now, 2, () =>
+            {
+                sensorsLB.Invoke((MethodInvoker)delegate
+                {
+                    sensorsLB.SelectionMode = SelectionMode.MultiExtended;
 
-            Program.DetectionsService.GetSensorDetectionsList((detections) =>
+                    foreach (var item in _cachedSensornames)
+                    {
+                        sensorsLB.Items.Add(item);
+                        sensorsLB.SelectedItems.Add(item);
+                    }
+                });
+
                 plotView1.Invoke((MethodInvoker)delegate
                 {
-                    plotView1.Model = GetPlotModelDetections(detections);
-                }),
-                dateTimePicker1.Value
-            );
+                    plotView1.Model = GetPlotModelDetections(_cachedDetections);
+                });
+
+                dateTimePicker.Invoke((MethodInvoker)delegate
+                {
+                    dateTimePicker.Value = DateTime.Now;
+                });
+
+                UseWaitCursor = false;
+            });
         }
 
-        private PlotModel GetPlotModelDetections(List<SensorDetection> detections)
+        private void UpdateListOfDetections(DateTime dateTime, uint lastDays, Action callback)
         {
-            var xAxis = new TimeSpanAxis
+            Program.DetectionsService.SearchOptions = new SearchOptions(dateTime, lastDays);
+            Program.DetectionsService.GetSensorDetectionsList((detections) =>
+            {
+                _cachedDetections = detections.ToArray();
+                _cachedSensornames = ExtractSensorNames(detections).ToArray();
+                callback.Invoke();
+            });
+        }
+
+        private PlotModel GetPlotModelDetections(SensorDetection[] detections)
+        {
+            DateTimeAxis axesX = new DateTimeAxis
             {
                 Position = AxisPosition.Bottom,
-                Title = "Time Of Day",
+                StringFormat = "dd MM (HH:mm)",
+                Title = "Date time",
+                MinorIntervalType = DateTimeIntervalType.Hours,
+                IntervalType = DateTimeIntervalType.Days,
                 MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.None,
+                MinorGridlineStyle = LineStyle.Dot,
             };
 
-            var plotModel = new PlotModel
+            PlotModel n = new PlotModel
             {
-                Title = "Temperature, Humidity, CO2"
+                Title = string.Join(", ", ExtractSensorNames(detections).ToArray())
             };
-            plotModel.Axes.Add(xAxis);
-            plotModel.Axes.Add(new LinearAxis());
 
-            var grouped = detections.GroupBy(x => x.FullName);
-            foreach (var groupedDetections in grouped)
+            foreach (var groupedDetections in detections
+                .Where(x => sensorsLB.SelectedItems.Contains(x.FullName))
+                .GroupBy(x => x.FullName))
             {
                 FunctionSeries fs = new FunctionSeries()
                 {
-                    Title = groupedDetections.First().FullName
+                    Title = groupedDetections.First().FullName,
                 };
 
-                foreach (var detection in groupedDetections)
+                foreach (var detection in groupedDetections.OrderBy(x => x.DateTime))
                 {
-                    var point = new DataPoint(TimeSpanAxis.ToDouble(detection.DateTime.TimeOfDay), detection.Value);
+                    var timeOfDay = detection.DateTime.ToLocalTime();
+                    var point = new DataPoint(DateTimeAxis.ToDouble(timeOfDay), detection.Value);
                     fs.Points.Add(point);
                 }
 
-                plotModel.Series.Add(fs);
+                n.Series.Add(fs);
             }
 
-            return plotModel;
+
+           
+            n.Axes.Add(axesX);
+            n.Axes.Add(new LinearAxis());
+
+            return n;
         }
 
         private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
         {
-            Program.DetectionsService.GetSensorDetectionsList((detections) =>
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (sensorsLB.SelectedItems.Count == 1 
+                && _cachedDetections != null 
+                && _cachedDetections.Length > 0)
+            {
+                var valuesForDetection = _cachedDetections
+                    .Where(x => x.FullName.Equals(sensorsLB.SelectedItems[0]))
+                    .OrderByDescending(x => x.Value).ToList();
+
+                var max = valuesForDetection.FirstOrDefault();
+                var min = valuesForDetection.LastOrDefault();
+
+                if (min == null || max == null)
+                {
+                    maxForSelectedValue.Text = $"no data";
+                    minForSelectedValue.Text = $"no data";
+                }
+
+                maxForSelectedValue.Text = $"Max {max.Value} \t(for {max.FullName}) \tat {max.DateTime.ToLocalTime().ToString("dddd, dd MMMM yyyy HH:mm:ss")}";
+                minForSelectedValue.Text = $"Min {min.Value} \t(for {max.FullName}) \tat {min.DateTime.ToLocalTime().ToString("dddd, dd MMMM yyyy HH:mm:ss")}";
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            UseWaitCursor = true;
+            UpdateListOfDetections(dateTimePicker.Value, (uint)lastDaysNUD.Value, () =>
+            {
                 plotView1.Invoke((MethodInvoker)delegate
                 {
-                    plotView1.Model = GetPlotModelDetections(detections);
-                }),
-                ((DateTimePicker)sender).Value
-            );
+                    plotView1.Model = GetPlotModelDetections(_cachedDetections);
+                });
+
+                UseWaitCursor = false;
+            });
         }
+
+        private IEnumerable<string> ExtractSensorNames(ICollection<SensorDetection> detections)
+        //    => Program.Configuration.DetectionService.Sensors.Select(x => x.Name);
+            => detections.Select(x => x.FullName).Distinct();
     }
 }

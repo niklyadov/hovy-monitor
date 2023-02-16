@@ -29,7 +29,14 @@
         private void InitializeComponent()
         {
             this.plotView1 = new OxyPlot.WindowsForms.PlotView();
-            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
+            this.dateTimePicker = new System.Windows.Forms.DateTimePicker();
+            this.sensorsLB = new System.Windows.Forms.ListBox();
+            this.fetchBTN = new System.Windows.Forms.Button();
+            this.lastDaysNUD = new System.Windows.Forms.NumericUpDown();
+            this.maxForSelectedValue = new System.Windows.Forms.Label();
+            this.minForSelectedValue = new System.Windows.Forms.Label();
+            this.deskband1 = new HovyMonitor.DeskBar.Win.Deskband();
+            ((System.ComponentModel.ISupportInitialize)(this.lastDaysNUD)).BeginInit();
             this.SuspendLayout();
             // 
             // plotView1
@@ -40,20 +47,87 @@
             this.plotView1.Location = new System.Drawing.Point(0, 0);
             this.plotView1.Name = "plotView1";
             this.plotView1.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotView1.Size = new System.Drawing.Size(785, 359);
+            this.plotView1.Size = new System.Drawing.Size(785, 420);
             this.plotView1.TabIndex = 0;
             this.plotView1.Text = "plotView1";
             this.plotView1.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
             this.plotView1.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotView1.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // dateTimePicker1
+            // dateTimePicker
             // 
-            this.dateTimePicker1.Location = new System.Drawing.Point(13, 13);
-            this.dateTimePicker1.Name = "dateTimePicker1";
-            this.dateTimePicker1.Size = new System.Drawing.Size(182, 29);
-            this.dateTimePicker1.TabIndex = 1;
-            this.dateTimePicker1.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged);
+            this.dateTimePicker.Location = new System.Drawing.Point(12, 426);
+            this.dateTimePicker.Name = "dateTimePicker";
+            this.dateTimePicker.Size = new System.Drawing.Size(298, 29);
+            this.dateTimePicker.TabIndex = 1;
+            this.dateTimePicker.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged);
+            // 
+            // sensorsLB
+            // 
+            this.sensorsLB.AccessibleName = "";
+            this.sensorsLB.FormattingEnabled = true;
+            this.sensorsLB.ItemHeight = 21;
+            this.sensorsLB.Location = new System.Drawing.Point(12, 461);
+            this.sensorsLB.Name = "sensorsLB";
+            this.sensorsLB.Size = new System.Drawing.Size(206, 88);
+            this.sensorsLB.TabIndex = 2;
+            this.sensorsLB.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
+            // 
+            // fetchBTN
+            // 
+            this.fetchBTN.Location = new System.Drawing.Point(222, 461);
+            this.fetchBTN.Name = "fetchBTN";
+            this.fetchBTN.Size = new System.Drawing.Size(154, 32);
+            this.fetchBTN.TabIndex = 3;
+            this.fetchBTN.Text = "Fetch";
+            this.fetchBTN.UseVisualStyleBackColor = true;
+            this.fetchBTN.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // lastDaysNUD
+            // 
+            this.lastDaysNUD.Location = new System.Drawing.Point(316, 426);
+            this.lastDaysNUD.Maximum = new decimal(new int[] {
+            365,
+            0,
+            0,
+            0});
+            this.lastDaysNUD.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.lastDaysNUD.Name = "lastDaysNUD";
+            this.lastDaysNUD.Size = new System.Drawing.Size(60, 29);
+            this.lastDaysNUD.TabIndex = 4;
+            this.lastDaysNUD.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // maxForSelectedValue
+            // 
+            this.maxForSelectedValue.AutoSize = true;
+            this.maxForSelectedValue.Location = new System.Drawing.Point(227, 504);
+            this.maxForSelectedValue.Name = "maxForSelectedValue";
+            this.maxForSelectedValue.Size = new System.Drawing.Size(0, 21);
+            this.maxForSelectedValue.TabIndex = 5;
+            // 
+            // minForSelectedValue
+            // 
+            this.minForSelectedValue.AutoSize = true;
+            this.minForSelectedValue.Location = new System.Drawing.Point(227, 525);
+            this.minForSelectedValue.Name = "minForSelectedValue";
+            this.minForSelectedValue.Size = new System.Drawing.Size(0, 21);
+            this.minForSelectedValue.TabIndex = 6;
+            // 
+            // deskband1
+            // 
+            this.deskband1.BackColor = System.Drawing.Color.Black;
+            this.deskband1.Location = new System.Drawing.Point(138, 133);
+            this.deskband1.Name = "deskband1";
+            this.deskband1.Size = new System.Drawing.Size(100, 40);
+            this.deskband1.TabIndex = 7;
             // 
             this.minForSelectedValue.AutoSize = true;
             this.minForSelectedValue.Location = new System.Drawing.Point(227, 525);
@@ -73,8 +147,14 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(784, 361);
-            this.Controls.Add(this.dateTimePicker1);
+            this.ClientSize = new System.Drawing.Size(784, 561);
+            this.Controls.Add(this.deskband1);
+            this.Controls.Add(this.minForSelectedValue);
+            this.Controls.Add(this.maxForSelectedValue);
+            this.Controls.Add(this.lastDaysNUD);
+            this.Controls.Add(this.fetchBTN);
+            this.Controls.Add(this.sensorsLB);
+            this.Controls.Add(this.dateTimePicker);
             this.Controls.Add(this.plotView1);
             this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -84,13 +164,21 @@
             this.Name = "MainForm";
             this.Text = "HovyMonitor.Win";
             this.Load += new System.EventHandler(this.MainForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.lastDaysNUD)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
         private OxyPlot.WindowsForms.PlotView plotView1;
-        private System.Windows.Forms.DateTimePicker dateTimePicker1;
+        private System.Windows.Forms.DateTimePicker dateTimePicker;
+        private System.Windows.Forms.ListBox sensorsLB;
+        private System.Windows.Forms.Button fetchBTN;
+        private System.Windows.Forms.NumericUpDown lastDaysNUD;
+        private System.Windows.Forms.Label maxForSelectedValue;
+        private System.Windows.Forms.Label minForSelectedValue;
+        private Deskband deskband1;
     }
 }

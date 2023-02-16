@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Net.Http.Headers;
 
 namespace HovyMonitor.DeskBar.Win
 {
@@ -19,9 +19,9 @@ namespace HovyMonitor.DeskBar.Win
         public string ListOfSensorDetectionsUrl { get; set; } = "/";
         public List<SensorConfiguration> Sensors { get; set; }
             = new List<SensorConfiguration>();
+        public string DateTimeFormat { get; set; } = "MM.dd.yyyy";
 
         public int RefreshTimeout { get; set; } = 5000;
-        public int AvgDetectionTimeInMinutes = 60;
     }
 
     public class UIConfiguration
@@ -41,6 +41,12 @@ namespace HovyMonitor.DeskBar.Win
     }
 
     public class LabelConfiguration
+    {
+        public List<LabelDetectionConfigurations> Detections { get; set; } 
+            = new List<LabelDetectionConfigurations>();
+    }
+
+    public class LabelDetectionConfigurations
     {
         public string Format { get; set; }
         public bool CustomColors { get; set; }
