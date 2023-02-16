@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "HovyMonitor.Deskbar.Win.Updater/1.0.0": {
+        "dependencies": {
+          "Octokit": "4.0.3"
+        },
+        "runtime": {
+          "HovyMonitor.Deskbar.Win.Updater.dll": {}
+        }
+      },
+      "Octokit/4.0.3": {
+        "runtime": {
+          "lib/netstandard2.0/Octokit.dll": {
+            "assemblyVersion": "4.0.3.0",
+            "fileVersion": "4.0.3.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "HovyMonitor.Deskbar.Win.Updater/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Octokit/4.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-KhRtKMEJfjwGKwpha1JalVlRrUP4WfhqG6b0VCiQ2w8JTa1LwhoRPWH9EpZ01Q8I9Qshu2kJu/1lMUOaR4yc3Q==",
+      "path": "octokit/4.0.3",
+      "hashPath": "octokit.4.0.3.nupkg.sha512"
+    }
+  }
+}
