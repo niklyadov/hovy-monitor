@@ -24,6 +24,7 @@ namespace HovyMonitor.DeskBar.Win
         private Color FirstLabelTargetColor;
         private Color SecondLabelTargetColor;
         private Timer FetchNewDataTimer;
+        private const int HorizontalSize = 120;
 
         private Form FormGui;
 
@@ -32,7 +33,7 @@ namespace HovyMonitor.DeskBar.Win
 
         public Deskband()
         {
-            Options.MinHorizontalSize = new System.Drawing.Size(75, 30);
+            Options.MinHorizontalSize = new System.Drawing.Size(HorizontalSize, 30);
             InitializeComponent();
 
             ContextMenu cm = new ContextMenu();
@@ -91,7 +92,7 @@ namespace HovyMonitor.DeskBar.Win
             this.FirstLabel.Location = new System.Drawing.Point(0, 0);
             this.FirstLabel.Margin = new System.Windows.Forms.Padding(0);
             this.FirstLabel.Name = "FirstLabel";
-            this.FirstLabel.Size = new System.Drawing.Size(100, 20);
+            this.FirstLabel.Size = new System.Drawing.Size(HorizontalSize, 20);
             this.FirstLabel.TabIndex = 0;
             this.FirstLabel.Text = "? ? ?";
             this.FirstLabel.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
@@ -106,7 +107,7 @@ namespace HovyMonitor.DeskBar.Win
             this.SecondLabel.Location = new System.Drawing.Point(0, 20);
             this.SecondLabel.Margin = new System.Windows.Forms.Padding(0);
             this.SecondLabel.Name = "SecondLabel";
-            this.SecondLabel.Size = new System.Drawing.Size(100, 20);
+            this.SecondLabel.Size = new System.Drawing.Size(HorizontalSize, 20);
             this.SecondLabel.TabIndex = 1;
             this.SecondLabel.Text = "? ? ?";
             this.SecondLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -117,7 +118,7 @@ namespace HovyMonitor.DeskBar.Win
             this.Controls.Add(this.SecondLabel);
             this.Controls.Add(this.FirstLabel);
             this.Name = "Deskband";
-            this.Size = new System.Drawing.Size(100, 40);
+            this.Size = new System.Drawing.Size(HorizontalSize, 40);
             this.ResumeLayout(false);
 
         }
