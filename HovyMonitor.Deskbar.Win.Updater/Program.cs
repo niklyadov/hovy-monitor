@@ -133,7 +133,7 @@ internal class Program
 
         await downloader.SaveFileTo(downloadedFilePath);
 
-        downloadedFilePath = "C:\\Users\\Nick\\Desktop\\i.zip";
+        //downloadedFilePath = "C:\\Users\\Nick\\Desktop\\i.zip";
 
         Console.WriteLine($"Zip: {downloadedFilePath}");
 
