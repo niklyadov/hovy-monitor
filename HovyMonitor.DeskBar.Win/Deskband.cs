@@ -39,7 +39,7 @@ namespace HovyMonitor.DeskBar.Win
             ContextMenu cm = new ContextMenu();
 
             cm.MenuItems.Add("Show GUI", (object sender, EventArgs e) => {
-                if(FormGui != null)
+                if (FormGui != null)
                 {
                     FormGui.Close();
                 }
@@ -64,9 +64,20 @@ namespace HovyMonitor.DeskBar.Win
             cm.MenuItems.Add("-");
 
             cm.MenuItems.Add("About", (object sender, EventArgs e) =>
-                MessageBox.Show($"HovyMonitor(.DeskBar.Win) - {Assembly.GetExecutingAssembly().GetName().Version}" +
-                    "\n\n" +
-                    File.ReadAllText(Program.ChangelogLocation)));
+            {
+                if (FormGui != null)
+                {
+                    FormGui.Close();
+                }
+                FormGui = new MainForm();
+                FormGui.Show();
+
+                var title = $"HovyMonitor(.DeskBar.Win) - {Assembly.GetExecutingAssembly().GetName().Version}";
+                var text = File.ReadAllText(Program.ChangelogLocation);
+
+
+                SimpleReportViewer.ShowDialog(text, title, FormGui);
+            });
 
             ContextMenu = cm;
 

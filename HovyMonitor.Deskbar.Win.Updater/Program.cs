@@ -1,14 +1,12 @@
 ﻿using HovyMonitor.Deskbar.Win.Updater;
 using HovyMonitor.Deskbar.Win.Updater.Extensions;
-using Octokit;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
-using System.Threading;
 
 internal class Program
 {
-    private static Mutex _mutex;
+    private static Mutex? _mutex;
     private const string APP_NAME = "HovyMonitor.Deskbar.Win.Updater.exe";
 
     public static readonly ArgumentOptions OptionsArgs = new ArgumentOptions();
@@ -44,7 +42,8 @@ internal class Program
             Console.WriteLine($"{APP_NAME} is already running! Exiting the application.");
             Console.ReadKey();
 
-            Exit(); return;
+            Environment.Exit(0);
+            return;
         }
 
         await ChooseInstallWayAsync();
@@ -94,7 +93,8 @@ internal class Program
             UnnstallScript();
             InstallScript();
 
-            Exit(); return;
+            Environment.Exit(0);
+            return;
         }
 
         if (OptionsArgs.Step == 2)
@@ -103,23 +103,21 @@ internal class Program
 
             UnnstallScript();
 
-            Exit(); return;
+            Environment.Exit(0);
+            return;
         }
 
 
         if (IsLaunchingFromTempDirectory)
         {
-
             Console.WriteLine($"From temp: {IsLaunchingFromTempDirectory}");
 
-            //var updaterPathT = Path.Combine(TemporaryPath, "HovyMonitor.Deskbar.Win.Updater.exe");
-
-            //new CliRunner(updaterPathT, TemporaryPath)
-            //    .Run($"-s 2 -i {Identifier}", CancellationToken.None);
+            UnnstallScript();
 
             GenerateHelperScriptAsync();
 
-            Exit(); return;
+            Environment.Exit(0); 
+            return;
         }
 
         var uriResolver = new GithubReleasesDownloadUrlResolver(
@@ -135,7 +133,7 @@ internal class Program
 
         await downloader.SaveFileTo(downloadedFilePath);
 
-        //var downloadedFilePath = "C:\\Users\\Nick\\Desktop\\i.zip";
+        downloadedFilePath = "C:\\Users\\Nick\\Desktop\\i.zip";
 
         Console.WriteLine($"Zip: {downloadedFilePath}");
 
@@ -149,7 +147,8 @@ internal class Program
         new CliRunner(updaterPath, TemporaryPath)
             .Run($"-w -i {Identifier}", CancellationToken.None);
 
-        Exit();  return;
+        Environment.Exit(0);
+        return;
     }
 
     private static void GenerateHelperScriptAsync()
@@ -232,6 +231,11 @@ internal class Program
 
         new CliRunner(regasmPath, TemporaryPath)
                 .Run($"/nologo /u \"{Path.Combine(InstancePath, "HovyMonitor.DeskBar.Win.dll")}\"", CancellationToken.None);
+
+        new CliRunner("taskkill", "/")
+            .Run("/im explorer.exe /f", CancellationToken.None);
+
+        Process.Start(Path.Combine(Environment.GetEnvironmentVariable("windir")!, "explorer.exe"));
     }
 
     private static string[] ResolveRegasmPathes()
@@ -252,13 +256,6 @@ internal class Program
         }
 
         return dotnetPathes.ToArray();
-    }
-
-
-    private static void Exit()
-    {
-        Console.ReadKey();
-        Environment.Exit(0);
     }
 }
 
